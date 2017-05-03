@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+%wheel ALL=(ALL) NOPASSWD: ALL
+root ALL=(ALL) NOPASSWD: ALL

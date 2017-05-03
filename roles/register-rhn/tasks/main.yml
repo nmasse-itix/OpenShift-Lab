@@ -1,0 +1,25 @@
+---
+  - name: This module should only work on RHEL
+    assert:
+      that:
+        - "ansible_os_family == 'RedHat'"
+
+  - name: Register this system on RHN
+    redhat_subscription:
+      state: present
+      username: "{{ lookup('env','RHN_LOGIN') }}"
+      password: "{{ lookup('env','RHN_PASSWORD') }}"
+      consumer_name: "{{ inventory_hostname }}"
+      autosubscribe: false
+    tags: rhn
+
+#
+# To know which Pool ID you can use, run the following command on a registered host :
+#
+#   sudo subscription-manager list --available --matches '*OpenShift*'
+#
+
+  - name: Attach the correct pool id to the new subscription
+    command: subscription-manager attach --pool={{ lookup('env','RHN_POOLID') }}
+    when: 'lookup("env","RHN_POOLID") != ""'
+    tags: rhn

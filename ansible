@@ -1,0 +1,86 @@
+#!/bin/bash
+
+options=""
+ssh_key="$HOME/.ssh/id_rsa"
+initial_user="root"
+
+target="$1"
+shift
+case "$target" in
+  "bootstrap")
+    if [ -z "$1" ]; then
+      echo "Please specify the target host(s) !"
+      exit 1
+    fi
+    echo "Bootstraping $@..."
+    echo
+    echo -n "Please enter the initial $initial_user password: "
+    read -s password
+    echo # Add a Line Feed since the "read -s" do not output it !
+
+    # Ask for Red Hat Network credentials
+    if [ -z "$RHN_LOGIN" ]; then
+      echo -n "Please enter your RHN login: "
+      read rhn_login
+      export RHN_LOGIN="$rhn_login"
+    fi
+    if [ -z "$RHN_PASSWORD" ]; then
+      echo -n "Please enter your RHN password: "
+      read -s rhn_password
+      export RHN_PASSWORD="$rhn_password"
+      echo # Add a Line Feed since the "read -s" do not output it !
+    fi
+    if [ -z "$RHN_POOLID" ]; then
+      echo -n "Please enter your RHN Pool ID: "
+      read rhn_poolid
+      export RHN_POOLID="$rhn_poolid"
+    fi
+    echo
+    echo
+
+    # Pre-register SSH Host Keys
+    for host; do
+      echo "Connecting to $host to register the SSH Host Key !"
+      LC_ALL=C sshpass -p "$password" ssh -i $ssh_key -o StrictHostKeyChecking=no "$initial_user@$host" /bin/true
+    done
+
+    # Setup authentication
+    if [ -n "$password" ]; then
+      options="$options -e ansible_ssh_pass=$password"
+    else
+      options="$options -e ansible_ssh_private_key_file=$ssh_key"
+    fi
+
+    # Setup the ssh user
+    options="$options -e ansible_ssh_user=$initial_user "
+
+    # Generate an inventory file "on the fly"
+    echo "[bootstrap]" > "bootstrap.hosts"
+    for host; do
+      echo -e "$host"
+    done >> "bootstrap.hosts"
+
+    ansible-playbook -i "bootstrap.hosts" $options bootstrap.yml
+
+    rm -f "bootstrap.hosts"
+  ;;
+  "play")
+    if [ -z "$1" ]; then
+      echo "Please specify the playbook to run !"
+      exit 1
+    fi
+
+    playbook="$1"
+    shift
+
+    ansible-playbook -i "$playbook.hosts" $options "$@" $playbook.yml
+  ;;
+  *)
+    echo "Usage: $0 {bootstrap|play} [options]"
+    echo
+    echo "Samples: "
+    echo "       $0 bootstrap machine.example.com"
+    echo "       $0 play allinone"
+    exit 1
+  ;;
+esac

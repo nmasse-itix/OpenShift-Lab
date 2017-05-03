@@ -1,0 +1,30 @@
+---
+
+ - name: This module has only been tested on RHEL and CentOS
+   assert:
+     that:
+       - "ansible_os_family == 'RedHat' or ansible_os_family == 'CentOS'"
+
+ - name: Create user RedHat
+   user: name=redhat group=users groups=users,wheel state=present comment="RedHat privileged user" password="*"
+   tags:
+     - bootstrap
+     - user
+
+ - name: Set SSH key for root
+   authorized_key: user=root key="{{ ansible_ssh_public_key }}" manage_dir=yes
+   tags:
+     - bootstrap
+     - user
+
+ - name: Set SSH key for user RedHat
+   authorized_key: user=redhat key="{{ ansible_ssh_public_key }}" manage_dir=yes
+   tags:
+     - bootstrap
+     - user
+
+ - name: Configure SUDO
+   template: src=sudoers dest=/etc/sudoers owner=root group=root mode=0440 validate="/usr/sbin/visudo -cf %s"
+   tags:
+     - bootstrap
+     - config

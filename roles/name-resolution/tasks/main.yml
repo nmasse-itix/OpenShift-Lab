@@ -1,0 +1,48 @@
+---
+
+  - name: Check for mandatory variables required by this playbook
+    fail:
+      msg: "This playbook requires {{item}} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - lab_dns_suffix
+    - lab_route_suffix
+
+  - name: Make sure each machine has an up-to-date /etc/hosts
+    template: dest=/etc/hosts src=hosts
+    tags: config
+
+  - name: Install dnsmasq
+    yum: name=dnsmasq state=installed
+    when: "'name-server' in group_names" # Only on admin server
+    tags: rpm
+
+  - name: Set dnsmasq config
+    template: src=dnsmasq.conf dest=/etc/dnsmasq.conf
+    when: "'name-server' in group_names" # Only on admin server
+    tags: config
+
+  - name: Generate an /etc/hosts with all hosts
+    template: dest=/etc/hosts.dnsmasq src=hosts
+    when: "'name-server' in group_names" # Only on admin server
+    tags: config
+
+  - name: Make sure dnsmasq daemon is enabled and started
+    service: name=dnsmasq state=started enabled=yes
+    when: "'name-server' in group_names" # Only on admin server
+    tags: config
+
+  - name: Add an iptable rule to allow DNS queries from other hosts
+    lineinfile: dest=/etc/sysconfig/iptables line="-A INPUT -p udp --dport 53 -j ACCEPT" insertafter="-A INPUT -i lo -j ACCEPT"
+    when: "'name-server' in group_names" # Only on admin server
+    tags: iptables
+
+  - name: Restart iptables
+    service: name=iptables enabled=yes state=restarted
+    when: "'name-server' in group_names" # Only on admin server
+    tags: iptables
+
+  - name: Fix the /etc/resolv.conf of other hosts
+    template: dest=/etc/resolv.conf src=resolv.conf
+    when: "'name-server' in groups and 'name-server' not in group_names" # On all other nodes (if a name server has been setup)
+    tags: config

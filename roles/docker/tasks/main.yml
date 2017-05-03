@@ -1,0 +1,65 @@
+---
+
+  - name: Check for mandatory variables required by this playbook
+    fail:
+      msg: "This playbook requires {{item}} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - docker_storage_vg
+    tags: docker-storage
+
+  - name: Make sure the extra repos is enabled
+    command: subscription-manager repos --enable rhel-7-server-extras-rpms
+    when: "ansible_os_family == 'RedHat'"
+    tags: rpm
+
+  - name: Install Docker
+    yum: name=docker state=installed
+    tags: rpm
+
+  - name: Start docker
+    service: name=docker state=started
+    tags: docker-storage
+
+  - name: Determine if docker storage driver == devicemapper
+    shell: docker info | grep 'Storage Driver:.*devicemapper'
+    register: correct_storage_driver
+    changed_when: false
+    ignore_errors: yes
+
+  - debug:
+      var: correct_storage_driver
+
+  - name: set docker_storage_setup_needs_to_run
+    set_fact:
+      docker_storage_setup_needs_to_run: '{{ correct_storage_driver.rc == 1 }}'
+    tags: docker-storage
+
+  - name: stop docker
+    service:
+      name: docker
+      state: stopped
+    when: docker_storage_setup_needs_to_run
+    tags: docker-storage
+
+  - name: delete /var/lib/docker
+    command: rm -rf /var/lib/docker
+    when: docker_storage_setup_needs_to_run
+    tags: docker-storage
+
+  - name: Configure docker-storage-setup to use LVM
+    template: dest=/etc/sysconfig/docker-storage-setup src=docker-storage-setup
+    register: docker-storage-setup
+    when: docker_storage_setup_needs_to_run
+    tags: docker-storage
+
+  - name: Run docker-storage-setup
+    command: docker-storage-setup
+    environment:
+      PATH: /bin:/usr/bin:/sbin:/usr/sbin # Fix buggy PATH on RHEL7
+    when: docker_storage_setup_needs_to_run
+    tags: docker-storage
+
+  - name: Start Docker
+    service: name=docker state=started enabled=yes
+    tags: docker-storage

@@ -1,0 +1,8 @@
+---
+
+ - name: Bootstrap one or more RHEL7 nodes
+   hosts: bootstrap
+   become: no
+   roles:
+    - bootstrap
+    - register-rhn

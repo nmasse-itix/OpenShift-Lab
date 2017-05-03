@@ -1,0 +1,64 @@
+---
+  - name: This module has only been tested on RHEL 7.3 x64
+    assert:
+      that:
+        - "ansible_userspace_bits == '64'"
+        - "ansible_os_family == 'RedHat'"
+        - "ansible_distribution_version == '7.3'"
+
+  - name: Tell SSHD not to use DNS
+    lineinfile: dest=/etc/ssh/sshd_config regexp="^#* *UseDNS +" line="UseDNS no"
+    notify: restart sshd
+    tags: config
+
+  - name: Tell SSHD to forbid root accesses
+    lineinfile: dest=/etc/ssh/sshd_config regexp="^#* *PermitRootLogin +" line="PermitRootLogin no"
+    notify: restart sshd
+    tags: config
+
+  - name: Tell SSHD to forbid password accesses
+    lineinfile: dest=/etc/ssh/sshd_config regexp="^#* *PasswordAuthentication +" line="PasswordAuthentication no"
+    notify: restart sshd
+    tags: config
+
+  - name: Install some software
+    yum: name={{ item }} state=installed
+    with_items:
+      - vim-enhanced
+      - tmux
+      - unzip
+      - tcpdump
+      - telnet
+      - strace
+      - man-pages
+      - man
+      - iptraf
+      - wget
+      - openssh-clients
+    tags: rpm
+
+  - name: Install Open-VM tools
+    yum: name=open-vm-tools state=installed
+    tags: rpm
+
+  - name: Fix /etc/environment to include PATH
+    lineinfile: dest=/etc/environment regexp="^PATH=" line="PATH=/bin:/usr/bin:/sbin:/usr/sbin"
+    tags: config
+
+  - name: Persist the hostname
+    lineinfile: dest=/etc/sysconfig/network regexp="^HOSTNAME=" line="HOSTNAME={{ inventory_hostname_short }}"
+    tags:
+      - config
+      - dns
+
+  - name: Set the hostname
+    command: hostnamectl set-hostname {{ inventory_hostname_short }} --static
+    tags:
+      - config
+      - dns
+
+  - name: Ensure consistent locale across systems (1/2)
+    lineinfile: dest=/etc/locale.conf regexp="^LANG=" line="LANG=en_US.utf8"
+
+  - name: Ensure consistent locale across systems (2/2)
+    lineinfile: dest=/etc/locale.conf line="LC_CTYPE=en_US.utf8"

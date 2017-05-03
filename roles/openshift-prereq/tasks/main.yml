@@ -1,0 +1,43 @@
+---
+
+  - name: This module has only been tested on RHEL 7.3 x64
+    assert:
+      that:
+        - "ansible_userspace_bits == '64'"
+        - "ansible_os_family == 'RedHat'"
+        - "ansible_distribution_version == '7.3'"
+
+  - name: First, disable any repos (using subscription-manager)
+    command: subscription-manager repos --disable="*"
+    tags: rpm
+
+  - name: Make sure mandatory repos are enabled
+    command: subscription-manager repos --enable {{ item }}
+    with_items:
+      - rhel-7-server-rpms
+      - rhel-7-server-optional-rpms
+      - rhel-7-server-extras-rpms
+      - rhel-7-server-ose-{{ lab_openshift_version }}-rpms
+      - rhel-7-fast-datapath-rpms # see https://access.redhat.com/solutions/3008401
+    tags: rpm
+
+  - name: Install nfs-utils
+    yum: name=nfs-utils state=installed
+    tags: rpm
+
+  - name: Install bash-completion
+    yum: name=bash-completion state=installed
+    when: "'masters' in group_names" # Only on master server
+    tags: rpm
+
+  - name: Install NetworkManager
+    yum: name=NetworkManager state=installed
+    tags: rpm
+
+  - name: Install net-tools
+    yum: name=net-tools state=installed
+    tags: rpm
+
+  - name: Install bind-utils
+    yum: name=bind-utils state=installed
+    tags: rpm

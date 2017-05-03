@@ -1,0 +1,64 @@
+#
+# Variables used by my playbook
+#
+[allinone:vars]
+lab_dns_suffix=openshift.test
+lab_openshift_version=3.5
+docker_storage_vg=docker
+
+[allinone:children]
+masters
+
+#
+# Shared variables used by both openshift-ansible and my playbook
+#
+[all:vars]
+# Default route suffix
+openshift_master_default_subdomain=app.openshift.test
+
+[masters]
+openshift35.openshift.test
+
+[nodes]
+openshift35.openshift.test openshift_node_labels='{ "workload": "infra", "workload": "app" }'
+
+#
+# The rest is used only by the OpenShift installer playbook
+#
+[OSEv3:children]
+masters
+nodes
+
+[OSEv3:vars]
+# Yes, we need to use sudo
+ansible_become=yes
+
+# what to install
+deployment_type=openshift-enterprise
+
+# New installation method : everything in containers !
+contenairized=true
+
+# Clustering method
+openshift_master_cluster_method=native
+
+# Bypass Registry Security Checks
+openshift_docker_insecure_registries=172.30.0.0/16
+
+# Disable any authentication
+openshift_master_identity_providers=[{'name': 'allow_all', 'login': 'true', 'challenge': 'true', 'kind': 'AllowAllPasswordIdentityProvider'}]
+
+# default project node selector
+osm_default_node_selector='workload=app'
+
+# Make sure NTP is enabled
+openshift_clock_enabled=true
+
+# default router
+openshift_hosted_router_selector='workload=infra'
+
+# Do not create the default project "my-project"
+openshift_additional_projects={}
+
+# Enable the multitenant SDN
+os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'

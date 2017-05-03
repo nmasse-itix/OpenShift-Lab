@@ -1,0 +1,14 @@
+---
+
+  - name: Prepare an "All-in-one" VM for OpenShift
+    hosts: allinone
+    become: yes
+    roles:
+    - { name: 'base', tags: 'base' }
+    - { name: 'iptables', tags: 'iptables' }
+    - { name: 'name-resolution', tags: 'name-resolution' }
+    - { name: 'docker', tags: 'docker' }
+    - { name: 'openshift-prereq', tags: 'openshift-prereq' }
+
+  # Launch the OpenShift Installer Playbook
+  - include: "./openshift-ansible/playbooks/byo/config.yml"

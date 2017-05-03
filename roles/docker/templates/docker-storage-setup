@@ -1,0 +1,9 @@
+STORAGE_DRIVER=devicemapper
+DOCKER_ROOT_VOLUME=yes
+
+{% if docker_storage_disk is defined %}
+DEVS={{ docker_storage_disk }}
+{% endif %}
+{% if docker_storage_vg is defined %}
+VG={{ docker_storage_vg }}
+{% endif %}
