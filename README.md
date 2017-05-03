@@ -7,7 +7,7 @@ This project is the Ansible Playbook to install OpenShift in a Lab Environment.
 
 ## Example
 
-‘‘‘
+```
 ./ansible bootstrap vm.openshift.test
 ./ansible play allinone
-’’’
+```
