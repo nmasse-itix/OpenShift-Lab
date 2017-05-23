@@ -1,0 +1,8 @@
+---
+
+  hostpath_provisioner_default_options:
+    path: /var/openshift
+    git_checkout_path: /home/{{ ansible_user }}/OpenShift-HostPath-Provisioner
+    git_repo_url: https://github.com/nmasse-itix/OpenShift-HostPath-Provisioner.git
+    target_namespace: default
+    docker_image: john/openshift-hostpath-provisioner:latest

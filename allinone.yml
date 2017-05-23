@@ -12,3 +12,9 @@
 
   # Launch the OpenShift Installer Playbook
   - include: "./openshift-ansible/playbooks/byo/config.yml"
+
+  - name: Customize the OpenShift installation
+    hosts: allinone
+    become: yes
+    roles:
+    - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }

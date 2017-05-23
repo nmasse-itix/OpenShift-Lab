@@ -1,0 +1,30 @@
+---
+
+  - name: Create an empty hostpath_provisioner_options variable if it does not exist
+    set_fact:
+      hostpath_provisioner_options: {}
+    when: hostpath_provisioner_options is not defined
+    tags: vars
+
+  - name: Provision default values for the hostpath_provisioner_options
+    set_fact:
+      hostpath_provisioner_options: "{{ hostpath_provisioner_default_options|combine(hostpath_provisioner_options) }}"
+    tags: vars
+
+  - name: Create a directory for the hostpath-provisioner
+    file: state=directory path={{ hostpath_provisioner_options.path }} owner=root group=root mode=0777 setype=svirt_sandbox_file_t
+
+  - name: Checkout the hostpath-provisioner GIT Repository
+    git: dest={{ hostpath_provisioner_options.git_checkout_path }} repo={{ hostpath_provisioner_options.git_repo_url }}
+    become: no
+
+  - name: Process the OpenShift Template
+    shell: oc process -f setup/hostpath-provisioner-template.yaml -p "HOSTPATH_TO_USE={{ hostpath_provisioner_options.path }}" -p "TARGET_NAMESPACE={{ hostpath_provisioner_options.target_namespace }}" -p "HOSTPATH_PROVISIONER_IMAGE={{ hostpath_provisioner_options.docker_image }}" > objects.json
+    args:
+      chdir: "{{ hostpath_provisioner_options.git_checkout_path }}"
+    become: no
+
+  - name: Create the OpenShift objects for the hostpath-provisioner
+    command: oc create -f objects.json
+    args:
+      chdir: "{{ hostpath_provisioner_git_checkout_path }}"
