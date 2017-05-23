@@ -3,10 +3,10 @@
   - name: Check for mandatory variables required by this playbook
     fail:
       msg: "This playbook requires {{item}} to be set."
-    when: "{{ item }} is not defined or {{ item }} == ''"
+    when: "item is not defined or item == ''"
     with_items:
     - lab_dns_suffix
-    - lab_route_suffix
+    - openshift_master_default_subdomain
 
   - name: Make sure each machine has an up-to-date /etc/hosts
     template: dest=/etc/hosts src=hosts
