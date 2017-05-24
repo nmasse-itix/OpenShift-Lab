@@ -14,17 +14,14 @@
   - name: Create a directory for the hostpath-provisioner
     file: state=directory path={{ hostpath_provisioner_options.path }} owner=root group=root mode=0777 setype=svirt_sandbox_file_t
 
-  - name: Checkout the hostpath-provisioner GIT Repository
-    git: dest={{ hostpath_provisioner_options.git_checkout_path }} repo={{ hostpath_provisioner_options.git_repo_url }}
-    become: no
+  - name: Process the OpenShift Template and create the OpenShift objects for the hostpath-provisioner
+    shell: oc process -f "{{ hostpath_provisioner_options.template }}" -p "HOSTPATH_TO_USE={{ hostpath_provisioner_options.path }}" -p "TARGET_NAMESPACE={{ hostpath_provisioner_options.target_namespace }}" -p "HOSTPATH_PROVISIONER_IMAGE={{ hostpath_provisioner_options.docker_image }}" | oc create -f -
 
-  - name: Process the OpenShift Template
-    shell: oc process -f setup/hostpath-provisioner-template.yaml -p "HOSTPATH_TO_USE={{ hostpath_provisioner_options.path }}" -p "TARGET_NAMESPACE={{ hostpath_provisioner_options.target_namespace }}" -p "HOSTPATH_PROVISIONER_IMAGE={{ hostpath_provisioner_options.docker_image }}" > objects.json
-    args:
-      chdir: "{{ hostpath_provisioner_options.git_checkout_path }}"
-    become: no
+  - name: Copy the PersistentVolumeClaim object definition
+    copy: src=registry-storage-pvc.yaml dest=/tmp/registry-storage-pvc.yaml
 
-  - name: Create the OpenShift objects for the hostpath-provisioner
-    command: oc create -f objects.json
-    args:
-      chdir: "{{ hostpath_provisioner_git_checkout_path }}"
+  - name: Create a PersistentVolumeClaim for the docker-registry
+    command: oc create -n default -f /tmp/registry-storage-pvc.yaml
+
+  - name: Add the new volume to docker-registry
+    command: oc volume dc docker-registry -n default --add=true --overwrite=true --type=persistentVolumeClaim --name=registry-storage --claim-name=registry-storage
