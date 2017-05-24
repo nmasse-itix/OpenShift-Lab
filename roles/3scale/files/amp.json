@@ -285,11 +285,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -373,11 +369,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -470,11 +462,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -619,11 +607,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -750,11 +734,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -867,11 +847,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -963,11 +939,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -1145,11 +1117,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -1281,11 +1249,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -2007,11 +1971,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -2394,11 +2354,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -2613,11 +2569,7 @@
             ]
           }
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ]
+        "triggers": []
       }
     },
     {
@@ -2630,11 +2582,7 @@
         "strategy": {
           "type": "Recreate"
         },
-        "triggers": [
-          {
-            "type": "ConfigChange"
-          }
-        ],
+        "triggers": [],
         "replicas": 0,
         "selector": {
           "name": "system-mysql"

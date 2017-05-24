@@ -14,13 +14,16 @@
   - name: Get a list of existing projects
     command: oc get projects -o name
     register: oc_get_projects
+    changed_when: false
 
   - name: Create a new project for 3scale
     command: oc new-project "{{ threescale_options.project }}"
-    when: "project/" + threescale_options.project not in oc_get_projects.stdout_lines
+    when: '"project/" ~ threescale_options.project not in oc_get_projects.stdout_lines'
 
-  - name: Process the OpenShift Template and create the OpenShift objects for the hostpath-provisioner
+  - name: Process the OpenShift Template and create the OpenShift objects for the 3scale API Management Platform
     shell: oc process -f "{{ threescale_options.template }}" -p "TENANT_NAME={{ threescale_options.tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_options.wildcard_domain }}" | oc create -f - -n "{{ threescale_options.project }}"
+
+    # TODO
 
   - name: Get Admin Username
     command: oc get dc system-app -n "{{ threescale_options.project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'
