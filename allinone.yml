@@ -18,3 +18,4 @@
     become: yes
     roles:
     - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }
+    - { name: '3scale', tags: '3scale' }

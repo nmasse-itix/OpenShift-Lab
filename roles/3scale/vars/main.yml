@@ -1,0 +1,7 @@
+---
+
+  threescale_default_options:
+    template: https://raw.githubusercontent.com/nmasse-itix/OpenShift-Lab/master/roles/3scale/files/amp.json
+    project: 3scale
+    tenant_name: 3scale
+    wildcard_domain: "{{ openshift_master_default_subdomain }}"

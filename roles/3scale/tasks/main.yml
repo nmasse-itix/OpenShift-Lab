@@ -1,0 +1,34 @@
+---
+
+  - name: Create an empty threescale_options variable if it does not exist
+    set_fact:
+      threescale_options: {}
+    when: threescale_options is not defined
+    tags: vars
+
+  - name: Provision default values for the 3scale_options
+    set_fact:
+      threescale_options: "{{ threescale_default_options|combine(threescale_options) }}"
+    tags: vars
+
+  - name: Get a list of existing projects
+    command: oc get projects -o name
+    register: oc_get_projects
+
+  - name: Create a new project for 3scale
+    command: oc new-project "{{ threescale_options.project }}"
+    when: "project/" + threescale_options.project not in oc_get_projects.stdout_lines
+
+  - name: Process the OpenShift Template and create the OpenShift objects for the hostpath-provisioner
+    shell: oc process -f "{{ threescale_options.template }}" -p "TENANT_NAME={{ threescale_options.tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_options.wildcard_domain }}" | oc create -f - -n "{{ threescale_options.project }}"
+
+  - name: Get Admin Username
+    command: oc get dc system-app -n "{{ threescale_options.project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'
+    register: username
+
+  - name: Get Admin Password
+    command: oc get dc system-app -n "{{ threescale_options.project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_PASSWORD")].value}'
+    register: password
+
+  - name: 3scale is ready !
+    debug: msg="Login on https://{{ threescale_options.tenant_name }}-admin.{{ threescale_options.wildcard_domain }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
