@@ -5,3 +5,4 @@
     target_namespace: default
     docker_image: nmasse/openshift-hostpath-provisioner:latest
     template: https://raw.githubusercontent.com/nmasse-itix/OpenShift-HostPath-Provisioner/master/setup/hostpath-provisioner-template.yaml
+    patch_docker_registry: true

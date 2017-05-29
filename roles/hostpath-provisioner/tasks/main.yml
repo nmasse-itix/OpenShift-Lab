@@ -19,9 +19,12 @@
 
   - name: Copy the PersistentVolumeClaim object definition
     copy: src=registry-storage-pvc.yaml dest=/tmp/registry-storage-pvc.yaml
+    when: hostpath_provisioner_options.patch_docker_registry
 
   - name: Create a PersistentVolumeClaim for the docker-registry
     command: oc create -n default -f /tmp/registry-storage-pvc.yaml
+    when: hostpath_provisioner_options.patch_docker_registry
 
   - name: Add the new volume to docker-registry
     command: oc volume dc docker-registry -n default --add=true --overwrite=true --type=persistentVolumeClaim --name=registry-storage --claim-name=registry-storage
+    when: hostpath_provisioner_options.patch_docker_registry
