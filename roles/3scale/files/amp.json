@@ -238,7 +238,7 @@
         "name": "backend-cron"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "backend-cron"
         },
@@ -295,7 +295,7 @@
         "name": "backend-redis"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "backend-redis"
         },
@@ -379,7 +379,7 @@
         "name": "backend-listener"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "backend-listener"
         },
@@ -551,7 +551,7 @@
         "name": "backend-worker"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "backend-worker"
         },
@@ -658,7 +658,7 @@
         "name": "system-redis"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-redis"
         },
@@ -764,7 +764,7 @@
         "name": "system-sphinx"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-sphinx"
         },
@@ -877,7 +877,7 @@
         "name": "system-memcache"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-memcache"
         },
@@ -1021,7 +1021,7 @@
         "name": "apicast-staging"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "deploymentconfig": "apicast-staging"
         },
@@ -1153,7 +1153,7 @@
         "name": "apicast-production"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "deploymentconfig": "apicast-production"
         },
@@ -1333,7 +1333,7 @@
         "name": "system-app"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-app"
         },
@@ -1981,7 +1981,7 @@
         "name": "system-resque"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-resque"
         },
@@ -2364,7 +2364,7 @@
         "name": "system-sidekiq"
       },
       "spec": {
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-sidekiq"
         },
@@ -2583,7 +2583,7 @@
           "type": "Recreate"
         },
         "triggers": [],
-        "replicas": 1,
+        "replicas": 0,
         "selector": {
           "name": "system-mysql"
         },
