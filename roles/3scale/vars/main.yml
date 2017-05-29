@@ -5,3 +5,5 @@
     project: 3scale
     tenant_name: 3scale
     wildcard_domain: "{{ openshift_master_default_subdomain }}"
+    delay: 5
+    retries: 30
