@@ -41,3 +41,7 @@
   - name: Install bind-utils
     yum: name=bind-utils state=installed
     tags: rpm
+
+  - name: Install httpd-tools
+    yum: name=httpd-tools state=installed
+    tags: rpm
