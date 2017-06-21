@@ -21,6 +21,9 @@
     service: name=docker state=started
     tags: docker-storage
 
+ # TODO : on fresh install, run docker-storage-setup inconditionally
+
+
   - name: Determine if docker storage driver == devicemapper
     shell: docker info | grep 'Storage Driver:.*devicemapper'
     register: correct_storage_driver
