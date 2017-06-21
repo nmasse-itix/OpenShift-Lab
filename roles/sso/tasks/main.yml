@@ -2,7 +2,7 @@
 
   - name: Compute the default route name if not provided
     set_fact:
-      sso_route_name: '"secure-" ~ sso_application_name ~ "-" ~ sso_project ~ "." ~ openshift_master_default_subdomain'
+      sso_route_name: '{{ "secure-" ~ sso_application_name ~ "-" ~ sso_project ~ "." ~ openshift_master_default_subdomain }}'
     when: sso_route_name is not defined
 
   - name: Install java-1.8.0-openjdk-headless (required to use 'keytool')
@@ -36,10 +36,10 @@
     command: oc policy add-role-to-user view -z sso-service-account -n "{{ sso_project }}"
 
   - name: Generate a keypair for HTTPS
-    command: creates=keystore.jks keytool -genkey -alias ssl -keypass secret -storepass secret -keyalg RSA -keystore keystore.jks -validity 10950 -storetype JKS -dname "CN={{ sso_route_name }}"
+    command: creates=keystore.jks keytool -genkey -alias ssl -keypass "{{ sso_keystore_password }}" -storepass "{{ sso_keystore_password }}" -keyalg RSA -keystore keystore.jks -validity 10950 -storetype JKS -dname "CN={{ sso_route_name }}"
 
   - name: Generate a keypair for Jgroups
-    command: creates=jgroups.jceks keytool -genseckey -alias jgroups -keypass secret -storepass secret -keyalg Blowfish -keysize 56 -keystore jgroups.jceks -storetype JCEKS
+    command: creates=jgroups.jceks keytool -genseckey -alias jgroups -keypass "{{ sso_keystore_password }}" -storepass "{{ sso_keystore_password }}" -keyalg Blowfish -keysize 56 -keystore jgroups.jceks -storetype JCEKS
 
   - name: Create a secret combining both keypairs
     command: oc secret new sso-app-secret jgroups.jceks keystore.jks -n "{{ sso_project }}"
