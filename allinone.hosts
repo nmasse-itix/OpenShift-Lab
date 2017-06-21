@@ -54,5 +54,9 @@ openshift_clock_enabled=true
 # Do not create the default project "my-project"
 openshift_additional_projects={}
 
-# Enable the multitenant SDN
-os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+# Choose the default networking plugin so that all projects can communicate with eachother
+os_sdn_network_plugin_name='redhat/openshift-ovs-subnet'
+
+# On an 'All-in-one' OpenShift cluster, there is no need to have node selectors
+openshift_router_selector=''
+openshift_registry_selector=''
