@@ -17,5 +17,7 @@
     hosts: allinone
     become: yes
     roles:
+    - { name: 'openshift-postinstall', tags: 'openshift-postinstall' }
     - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }
     - { name: '3scale', tags: '3scale' }
+    - { name: 'sso', tags: 'sso' }

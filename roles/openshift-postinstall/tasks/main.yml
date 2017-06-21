@@ -1,0 +1,13 @@
+---
+
+  - name: Install new JBoss ImageStreams
+    command: oc create -n openshift -f "{{ jboss_image_streams }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - name: Update existing JBoss ImageStreams
+    command: oc replace -n openshift -f "{{ jboss_image_streams }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (NotFound):' not in oc.stderr
+    changed_when: oc.rc == 0

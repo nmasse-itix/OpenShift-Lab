@@ -1,0 +1,15 @@
+---
+  sso_image_stream: redhat-sso71-openshift
+  sso_image_stream_tag: redhat-sso71-openshift:1.0
+  sso_available_templates:
+    - sso71-https
+    - sso71-mysql-persistent
+    - sso71-mysql
+    - sso71-postgresql-persistent
+    - sso71-postgresql
+  sso_template: sso71-postgresql-persistent
+  sso_project: sso
+  sso_realm: sso
+  sso_keystore_password: secret
+  sso_admin_username: admin
+  sso_application_name: sso

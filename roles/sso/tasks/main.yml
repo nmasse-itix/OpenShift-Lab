@@ -1,0 +1,77 @@
+---
+
+  - name: Compute the default route name if not provided
+    set_fact:
+      sso_route_name: '"secure-" ~ sso_application_name ~ "-" ~ sso_project ~ "." ~ openshift_master_default_subdomain'
+    when: sso_route_name is not defined
+
+  - name: Install java-1.8.0-openjdk-headless (required to use 'keytool')
+    yum: name=java-1.8.0-openjdk-headless state=installed
+
+  - name: Get a list of existing projects
+    command: oc get projects -o name
+    register: oc_get_projects
+    changed_when: false
+
+  - name: Create a new project for SSO
+    command: oc new-project "{{ sso_project }}"
+    when: '"project/" ~ sso_project not in oc_get_projects.stdout_lines'
+
+  - name: Query existing deploymentconfigs
+    command: oc get dc -n "{{ sso_project }}" -o name -l "application={{ sso_application_name }}"
+    register: oc_get_dc
+    changed_when: false
+
+  - name: Deploy app if needed
+    set_fact:
+      deploy_needed: "{{ 'deploymentconfig/' ~ sso_application_name not in oc_get_dc.stdout_lines }}"
+
+  - name: Create a service account for SSO
+    command: oc create serviceaccount sso-service-account -n "{{ sso_project }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - name: Grant the "view" right to the SSO Service Account
+    command: oc policy add-role-to-user view -z sso-service-account -n "{{ sso_project }}"
+
+  - name: Generate a keypair for HTTPS
+    command: creates=keystore.jks keytool -genkey -alias ssl -keypass secret -storepass secret -keyalg RSA -keystore keystore.jks -validity 10950 -storetype JKS -dname "CN={{ sso_route_name }}"
+
+  - name: Generate a keypair for Jgroups
+    command: creates=jgroups.jceks keytool -genseckey -alias jgroups -keypass secret -storepass secret -keyalg Blowfish -keysize 56 -keystore jgroups.jceks -storetype JCEKS
+
+  - name: Create a secret combining both keypairs
+    command: oc secret new sso-app-secret jgroups.jceks keystore.jks -n "{{ sso_project }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - name: Link the new Secret to the SSO Service Account
+    command: oc secrets link sso-service-account sso-app-secret -n "{{ sso_project }}"
+
+  - name: Process the OpenShift Template and create the OpenShift objects
+    command: oc new-app -n {{ sso_project }} {{ sso_template }} -p "HTTPS_PASSWORD={{ sso_keystore_password }}" -p "JGROUPS_ENCRYPT_PASSWORD={{ sso_keystore_password }}" -p "SSO_REALM={{ sso_realm }}" -p "SSO_ADMIN_USERNAME={{ sso_admin_username }}" -p "APPLICATION_NAME={{ sso_application_name }}"
+    when: deploy_needed
+
+  - name: Get Admin Username
+    command: oc get dc {{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="SSO_ADMIN_USERNAME")].value}'
+    register: username
+    changed_when: false
+    tags: status
+
+  - name: Get Admin Password
+    command: oc get dc {{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="SSO_ADMIN_PASSWORD")].value}'
+    register: password
+    changed_when: false
+    tags: status
+
+  - name: Get Route URL
+    command: oc get route secure-{{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.host}'
+    register: route
+    changed_when: false
+    tags: status
+
+  - name: SSO is ready !
+    debug: msg="Login on https://{{ route.stdout }}/auth/admin with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
+    tags: status
