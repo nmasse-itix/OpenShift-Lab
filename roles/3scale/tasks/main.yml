@@ -21,7 +21,10 @@
     when: '"project/" ~ threescale_options.project not in oc_get_projects.stdout_lines'
 
   - name: Process the OpenShift Template and create the OpenShift objects for the 3scale API Management Platform
-    shell: oc process -f "{{ threescale_options.template }}" -p "TENANT_NAME={{ threescale_options.tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_options.wildcard_domain }}" | oc create -f - -n "{{ threescale_options.project }}"
+    shell: oc process -f "{{ threescale_options.template }}" -p "TENANT_NAME={{ threescale_options.tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_options.wildcard_domain }}" -n "{{ threescale_options.project }}" | oc create -f - -n "{{ threescale_options.project }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
 
   - include: status.yml
     tags: status
