@@ -8,6 +8,16 @@
   - name: Install java-1.8.0-openjdk-headless (required to use 'keytool')
     yum: name=java-1.8.0-openjdk-headless state=installed
 
+  - name: Create the Red Hat SSO templates (globally)
+    command: oc create -n openshift -f https://raw.githubusercontent.com/jboss-openshift/application-templates/{{ jboss_openshift_application_templates_version }}/sso/{{ item }}.json
+    with_items: "{{ sso_available_templates }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - name: Import the Red Hat SSO ImageStream (globally)
+    command: oc import-image -n openshift redhat-sso71-openshift
+
   - name: Get a list of existing projects
     command: oc get projects -o name
     register: oc_get_projects
