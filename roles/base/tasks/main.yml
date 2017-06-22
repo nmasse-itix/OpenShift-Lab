@@ -41,7 +41,7 @@
     yum: name=open-vm-tools state=installed
     tags: rpm
 
-  - name: Fix /etc/environment to include PATH
+  - name: Fix /etc/environment to include PATH (because sometime the PATH is broken when using Ansible)
     lineinfile: dest=/etc/environment regexp="^PATH=" line="PATH=/bin:/usr/bin:/sbin:/usr/sbin"
     tags: config
 
