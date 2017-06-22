@@ -5,7 +5,6 @@
     become: yes
     roles:
     - { name: 'base', tags: 'base' }
-    - { name: 'iptables', tags: 'iptables' }
     - { name: 'name-resolution', tags: 'name-resolution' }
     - { name: 'docker', tags: 'docker' }
     - { name: 'openshift-prereq', tags: 'openshift-prereq' }
@@ -20,4 +19,4 @@
     - { name: 'openshift-postinstall', tags: 'openshift-postinstall' }
     - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }
     - { name: '3scale', tags: '3scale' }
-    - { name: 'sso', tags: 'sso' }
+    - { name: 'sso', tags: 'sso', sso_realm: '3scale' }
