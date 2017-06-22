@@ -16,6 +16,10 @@ masters
 # Default route suffix
 openshift_master_default_subdomain=app.openshift.test
 
+# The SSH user that Ansible will use to run playbooks
+ansible_ssh_user=redhat
+
+
 [masters]
 openshift35.openshift.test
 
