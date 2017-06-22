@@ -1,7 +1,8 @@
 ---
-  timezone: Europe/Paris
+  # On some distro, /usr/bin/python does not exists... Here is the workaround
+  # to make it work everywhere
   ansible_python_interpreter: /usr/bin/python2
-  ansible_ssh_user: redhat
+
+  # The SSH Private Key that Ansible will use to connect to target hosts
+  # Also, the matching public key will be used by the "bootstrap" role.
   ansible_ssh_private_key_file: "{{ lookup('env','HOME') }}/.ssh/id_rsa"
-  ansible_ssh_public_key: "{{ lookup('file', ansible_ssh_private_key_file + '.pub' ) }}"
-  ansible_connection: ssh
