@@ -7,3 +7,5 @@
     wildcard_domain: "{{ openshift_master_default_subdomain }}"
     delay: 5
     retries: 30
+    apicast_cors_lua: https://raw.githubusercontent.com/3scale/apicast/cors-example/examples/cors/apicast_cors.lua
+    apicast_cors_conf: https://raw.githubusercontent.com/3scale/apicast/cors-example/examples/cors/cors.conf

@@ -26,6 +26,10 @@
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
 
+  # Deploy the CORS Configuration for APICast
+  # This is needed to make the "Try out" feature working in the Developer Portal
+  - include: apicast_cors.yml
+
   - include: status.yml
     tags: status
 

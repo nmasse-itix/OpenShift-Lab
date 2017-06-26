@@ -1,0 +1,24 @@
+---
+  
+  - name: Download 'apicast_cors.lua'
+    get_url: dest=apicast_cors.lua url={{ threescale_options.apicast_cors_lua }}
+
+  - name: Download 'cors.conf'
+    get_url: dest=cors.conf url={{ threescale_options.apicast_cors_conf }}
+
+  - name: Create ConfigMap 'apicast-cors'
+    command: oc create configmap apicast-cors --from-file=apicast_cors.lua -n "{{ threescale_options.project }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - name: Create ConfigMap 'cors-conf'
+    command: oc create configmap cors-conf --from-file=cors.conf -n "{{ threescale_options.project }}"
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - include: patch_apicast.yml
+    with_items:
+      - apicast-staging
+      - apicast-production
