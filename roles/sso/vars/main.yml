@@ -14,3 +14,4 @@
   sso_keystore_password: secret
   sso_admin_username: admin
   sso_application_name: sso
+  sso_service_username: cli

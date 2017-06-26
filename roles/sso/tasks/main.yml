@@ -4,6 +4,26 @@
     set_fact:
       sso_route_name: '{{ "secure-" ~ sso_application_name ~ "-" ~ sso_project ~ "." ~ openshift_master_default_subdomain }}'
     when: sso_route_name is not defined
+    tags: vars
+
+  - name: Get the exiting service account password
+    command: oc get dc {{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="SSO_SERVICE_PASSWORD")].value}'
+    register: password
+    changed_when: false
+    failed_when: false
+    tags: vars
+
+  - name: Re-use the exiting service account password
+    set_fact:
+      sso_service_password: "{{ password.stdout_lines[0] }}"
+    when: 'password.stdout != ""'
+    tags: vars
+
+  - name: Generate a new service account password
+    set_fact:
+      sso_service_password: "{{ lookup('password', '/dev/null length=8') }}"
+    when: 'sso_service_password is not defined'
+    tags: vars
 
   - name: Install java-1.8.0-openjdk-headless (required to use 'keytool')
     yum: name=java-1.8.0-openjdk-headless state=installed
@@ -61,8 +81,18 @@
     command: oc secrets link sso-service-account sso-app-secret -n "{{ sso_project }}"
 
   - name: Process the OpenShift Template and create the OpenShift objects
-    command: oc new-app -n {{ sso_project }} {{ sso_template }} -p "HTTPS_PASSWORD={{ sso_keystore_password }}" -p "JGROUPS_ENCRYPT_PASSWORD={{ sso_keystore_password }}" -p "SSO_REALM={{ sso_realm }}" -p "SSO_ADMIN_USERNAME={{ sso_admin_username }}" -p "APPLICATION_NAME={{ sso_application_name }}"
+    command: oc new-app -n {{ sso_project }} {{ sso_template }} -p "HTTPS_PASSWORD={{ sso_keystore_password }}" -p "JGROUPS_ENCRYPT_PASSWORD={{ sso_keystore_password }}" -p "SSO_REALM={{ sso_realm }}" -p "SSO_ADMIN_USERNAME={{ sso_admin_username }}" -p "APPLICATION_NAME={{ sso_application_name }}" -p "SSO_SERVICE_PASSWORD={{ sso_service_password }}" -p "SSO_SERVICE_USERNAME={{ sso_service_username }}"
     when: deploy_needed
+
+  - name: Extract the CA Cert from the keystore.jks
+    command: creates=cacert.pem keytool -exportcert -alias ssl -keypass "{{ sso_keystore_password }}" -storepass "{{ sso_keystore_password }}" -keystore keystore.jks -file cacert.pem -rfc
+
+  - name: Convert the CA Cert to a JSON String to be used in a JSON Patch
+    command: 'perl -pe ''chomp; print "\\n"'' cacert.pem'
+    register: cacert
+
+  - name: Update the secure route to use "reencrypt" instead of "passthrough"
+    command: 'oc patch route secure-{{ sso_application_name }} -n {{ sso_project }} --type=json -p ''[ { "op": "replace", "path": "/spec/tls/termination", "value": "reencrypt" }, { "op": "replace", "path": "/spec/tls/destinationCACertificate", "value": "{{ cacert.stdout }}" } ]'' '
 
   - name: Get Admin Username
     command: oc get dc {{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="SSO_ADMIN_USERNAME")].value}'
