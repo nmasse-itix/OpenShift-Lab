@@ -1,27 +1,16 @@
 ---
 
-  - name: Create an empty threescale_options variable if it does not exist
-    set_fact:
-      threescale_options: {}
-    when: threescale_options is not defined
-    tags: vars
-
-  - name: Provision default values for the 3scale_options
-    set_fact:
-      threescale_options: "{{ threescale_default_options|combine(threescale_options) }}"
-    tags: vars
-
   - name: Get a list of existing projects
     command: oc get projects -o name
     register: oc_get_projects
     changed_when: false
 
   - name: Create a new project for 3scale
-    command: oc new-project "{{ threescale_options.project }}"
-    when: '"project/" ~ threescale_options.project not in oc_get_projects.stdout_lines'
+    command: oc new-project "{{ threescale_project }}"
+    when: '"project/" ~ threescale_project not in oc_get_projects.stdout_lines'
 
   - name: Process the OpenShift Template and create the OpenShift objects for the 3scale API Management Platform
-    shell: oc process -f "{{ threescale_options.template }}" -p "TENANT_NAME={{ threescale_options.tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_options.wildcard_domain }}" -n "{{ threescale_options.project }}" | oc create -f - -n "{{ threescale_options.project }}"
+    shell: oc process -f "{{ threescale_template }}" -p "TENANT_NAME={{ threescale_tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_wildcard_domain }}" -n "{{ threescale_project }}" | oc create -f - -n "{{ threescale_project }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
@@ -34,7 +23,7 @@
     tags: status
 
   - name: Deploy the storage tier (MySQL, Redis and Memcache) without any replicas
-    command: oc rollout latest "{{ item }}" -n "{{ threescale_options.project }}"
+    command: oc rollout latest "{{ item }}" -n "{{ threescale_project }}"
     with_items:
       - backend-redis
       - system-memcache
@@ -44,7 +33,7 @@
     tags: rollout
 
   - name: Scale the storage tier (MySQL, Redis and Memcache)
-    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_options.project }}"
+    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - backend-redis
       - system-memcache
@@ -64,14 +53,14 @@
     tags: status
 
   - name: Deploy the backend-listener without any replicas
-    command: oc rollout latest "{{ item }}" -n "{{ threescale_options.project }}"
+    command: oc rollout latest "{{ item }}" -n "{{ threescale_project }}"
     with_items:
       - backend-listener
     when: item not in deployment_configs
     tags: rollout
 
   - name: Scale backend-listener
-    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_options.project }}"
+    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - backend-listener
     when: item not in replication_controllers
@@ -85,7 +74,7 @@
     tags: status
 
   - name: Deploy everything else without any replicas
-    command: oc rollout latest "{{ item }}" -n "{{ threescale_options.project }}"
+    command: oc rollout latest "{{ item }}" -n "{{ threescale_project }}"
     with_items:
       - backend-listener
       - backend-worker
@@ -100,7 +89,7 @@
     tags: rollout
 
   - name: Scale system-app, system-resque and system-sidekiq
-    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_options.project }}"
+    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - system-app
       - system-resque
@@ -118,7 +107,7 @@
     tags: status
 
   - name: Scale backend-cron, backend-worker and system-sphinx
-    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_options.project }}"
+    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - backend-worker
       - backend-cron
@@ -136,7 +125,7 @@
     tags: status
 
   - name: Deploy apicast-staging, apicast-production
-    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_options.project }}"
+    command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - apicast-staging
       #- apicast-production
@@ -152,17 +141,17 @@
     tags: status
 
   - name: Get Admin Username
-    command: oc get dc system-app -n "{{ threescale_options.project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'
+    command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'
     register: username
     changed_when: false
     tags: status
 
   - name: Get Admin Password
-    command: oc get dc system-app -n "{{ threescale_options.project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_PASSWORD")].value}'
+    command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_PASSWORD")].value}'
     register: password
     changed_when: false
     tags: status
 
   - name: 3scale is ready !
-    debug: msg="Login on https://{{ threescale_options.tenant_name }}-admin.{{ threescale_options.wildcard_domain }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
+    debug: msg="Login on https://{{ threescale_tenant_name }}-admin.{{ threescale_wildcard_domain }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
     tags: status
