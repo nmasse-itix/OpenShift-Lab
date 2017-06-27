@@ -87,7 +87,14 @@
   # Update the secure route to use "Re-encrypt" instead of "Passthrough"
   - include: update-route.yml
     tags: update-route
-    
+
+  - include: wait_for.yml
+    static: no
+    vars:
+      pod_to_wait:
+        - sso
+    tags: status
+
   - name: Get Admin Username
     command: oc get dc {{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="SSO_ADMIN_USERNAME")].value}'
     register: username
@@ -109,3 +116,5 @@
   - name: SSO is ready !
     debug: msg="Login on https://{{ route.stdout }}/auth/admin with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
     tags: status
+
+  - include: post-install.yml

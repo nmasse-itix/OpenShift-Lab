@@ -15,3 +15,5 @@
   sso_admin_username: admin
   sso_application_name: sso
   sso_service_username: cli
+  sso_retries: 30
+  sso_delay: 5

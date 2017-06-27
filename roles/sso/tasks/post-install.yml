@@ -1,0 +1,6 @@
+---
+
+# TODO Steps :
+# - register a client
+# - use that client to authenticate (openid connect password flow)
+# - use the REST APIs to administer RH-SSO
