@@ -84,16 +84,10 @@
     command: oc new-app -n {{ sso_project }} {{ sso_template }} -p "HTTPS_PASSWORD={{ sso_keystore_password }}" -p "JGROUPS_ENCRYPT_PASSWORD={{ sso_keystore_password }}" -p "SSO_REALM={{ sso_realm }}" -p "SSO_ADMIN_USERNAME={{ sso_admin_username }}" -p "APPLICATION_NAME={{ sso_application_name }}" -p "SSO_SERVICE_PASSWORD={{ sso_service_password }}" -p "SSO_SERVICE_USERNAME={{ sso_service_username }}"
     when: deploy_needed
 
-  - name: Extract the CA Cert from the keystore.jks
-    command: creates=cacert.pem keytool -exportcert -alias ssl -keypass "{{ sso_keystore_password }}" -storepass "{{ sso_keystore_password }}" -keystore keystore.jks -file cacert.pem -rfc
-
-  - name: Convert the CA Cert to a JSON String to be used in a JSON Patch
-    command: 'perl -pe ''chomp; s/\r//g; print "\\n"'' cacert.pem'
-    register: cacert
-
-  - name: Update the secure route to use "reencrypt" instead of "passthrough"
-    command: 'oc patch route secure-{{ sso_application_name }} -n {{ sso_project }} --type=json -p ''[ { "op": "replace", "path": "/spec/tls/termination", "value": "reencrypt" }, { "op": "replace", "path": "/spec/tls/destinationCACertificate", "value": "{{ cacert.stdout }}" } ]'' '
-
+  # Update the secure route to use "Re-encrypt" instead of "Passthrough"
+  - include: update-route.yml
+    tags: update-route
+    
   - name: Get Admin Username
     command: oc get dc {{ sso_application_name }} -n "{{ sso_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="SSO_ADMIN_USERNAME")].value}'
     register: username

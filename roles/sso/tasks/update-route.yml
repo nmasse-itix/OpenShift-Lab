@@ -1,0 +1,22 @@
+---
+#
+# By default, the RH-SSO template creates a secure route that uses "Passthrough".
+#
+# This my be useful if you plan to have client certificate authentication but
+# it has strong requirements on the client side because of the SNI extensions
+# (Server Name Indication) that are used by the underlying OpenShift Router to
+# direct the TLS flow to the right service.
+#
+# For a test lab / PoC, it is better to switch to "Re-encrypt" that has less
+# requirements to get it working.
+#
+
+  - name: Extract the CA Cert from the keystore.jks
+    command: creates=cacert.pem keytool -exportcert -alias ssl -keypass "{{ sso_keystore_password }}" -storepass "{{ sso_keystore_password }}" -keystore keystore.jks -file cacert.pem -rfc
+
+  - name: Convert the CA Cert to a JSON String to be used in a JSON Patch
+    command: 'perl -pe ''chomp; s/\r//g; print "\\n"'' cacert.pem'
+    register: cacert
+
+  - name: Update the secure route to use "reencrypt" instead of "passthrough"
+    command: 'oc patch route secure-{{ sso_application_name }} -n {{ sso_project }} --type=json -p ''[ { "op": "replace", "path": "/spec/tls/termination", "value": "reencrypt" }, { "op": "replace", "path": "/spec/tls/destinationCACertificate", "value": "{{ cacert.stdout }}" } ]'' '
