@@ -128,7 +128,7 @@
     command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - apicast-staging
-      #- apicast-production
+      - apicast-production
     when: item not in replication_controllers
     tags: rollout
 
@@ -137,7 +137,21 @@
     vars:
       pod_to_wait:
         - apicast-staging
-        #- apicast-production
+        - apicast-production
+    tags: status
+
+  - include: configure_apicast_for_oauth.yml
+    with_items:
+      - apicast-staging
+      - apicast-production
+    tags: oauth
+
+  - include: wait_for.yml
+    static: no
+    vars:
+      pod_to_wait:
+        - apicast-staging
+        - apicast-production
     tags: status
 
   - name: Get Admin Username
