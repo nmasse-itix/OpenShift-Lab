@@ -19,4 +19,4 @@
     - { name: 'openshift-postinstall', tags: 'openshift-postinstall' }
     - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }
     - { name: 'sso', tags: 'sso', sso_realm: '3scale' }
-    - { name: '3scale', tags: '3scale' }
+    - { name: '3scale', tags: '3scale', sso_realm: '3scale' }
