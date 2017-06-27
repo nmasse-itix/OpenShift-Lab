@@ -1,6 +1,43 @@
 ---
+  
+  # TODO : URLENCODE
+  - name: Authenticate to RH-SSO using the service account
+    command: curl --insecure --silent --data "grant_type=password&client_id={{ sso_default_client_id }}&username={{ sso_service_username }}&password={{ sso_service_password }}" https://{{ sso_route_name }}/auth/realms/{{ sso_realm }}/protocol/openid-connect/token
+    register: response
+    changed_when: false
 
-# TODO Steps :
-# - register a client
-# - use that client to authenticate (openid connect password flow)
-# - use the REST APIs to administer RH-SSO
+  - name: Extract the access_token
+    set_fact:
+      access_token: '{{ response.stdout |from_json |json_query("access_token") }}'
+
+  - debug: msg="access_token = {{ access_token }}"
+
+  - name: Create an Initial Access Token in RH-SSO
+    command: 'curl --silent --insecure -H "Authorization: Bearer {{ access_token }}" -X POST --data ''{{ sso_initial_access_token_request |to_json }}'' -H ''Content-Type: application/json'' https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/clients-initial-access'
+    register: response
+
+  - name: Extract the Initial Access Token from the RH-SSO response
+    set_fact:
+      initial_access_token: '{{ response.stdout |from_json |json_query("token") }}'
+
+  - debug: msg="initial_access_token = {{ initial_access_token }}"
+
+  - name: Get the current Realm configuration
+    command: 'curl --insecure --silent -H "Authorization: Bearer {{ access_token }}" https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}'
+    register: response
+
+  - name: Change the Realm configuration to extend the token lifetimes (see variable sso_default_realm_settings)
+    set_fact:
+      realm_config: '{{ response.stdout |from_json |combine(sso_default_realm_settings) }}'
+
+  - name: Update the Realm configuration
+    command: 'curl --insecure --silent -o /dev/null -w "%{http_code}" -H "Authorization: Bearer {{ access_token }}" -X PUT -d ''{{ realm_config|to_json }}'' -H "Content-Type: application/json" https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}'
+    register: response
+    failed_when: response.stdout != "204"
+
+  # TODO : check why the password don't work
+  - name: Create the Demo User
+    command: 'curl --insecure --silent -o /dev/null -w "%{http_code}" -H "Authorization: Bearer {{ access_token }}" -X POST -d ''{{ sso_demo_user|to_json }}'' -H "Content-Type: application/json" https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users'
+    register: response
+    failed_when: response.stdout != "201" and response.stdout != "409" # ie. "Created" or "AlreadyExists"
+    changed_when: response.stdout == "201"

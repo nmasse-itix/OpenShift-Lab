@@ -118,3 +118,6 @@
     tags: status
 
   - include: post-install.yml
+    vars:
+      sso_route_name: "{{ route.stdout }}"
+    tags: post-install

@@ -17,3 +17,27 @@
   sso_service_username: cli
   sso_retries: 30
   sso_delay: 5
+  sso_default_client_id: admin-cli
+  sso_initial_access_token_request:
+    count: 1000
+    expiration: 31557600 # a year expressed in seconds
+  sso_default_realm_settings:
+    notBefore: 3600 # Allow a clock skew of 1 hour
+    accessTokenLifespan: 86400 # 1 day
+    accessTokenLifespanForImplicitFlow: 86400 # 1 day
+    ssoSessionIdleTimeout: 86400 # 1 day
+    ssoSessionMaxLifespan: 86400 # 1 day
+    accessCodeLifespan: 86400 # 1 day
+    accessCodeLifespanUserAction: 86400 # 1 day
+    accessCodeLifespanLogin: 86400 # 1 day
+    registrationAllowed: true
+    rememberMe: true
+  sso_demo_user:
+    username: jdoe
+    firstName: John
+    lastName: Doe
+    enabled: true
+    credentials:
+      # Currently, password don't work. TODO: investigate why
+      - type: password
+        value: hackthis
