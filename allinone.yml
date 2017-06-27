@@ -18,5 +18,5 @@
     roles:
     - { name: 'openshift-postinstall', tags: 'openshift-postinstall' }
     - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }
-    - { name: '3scale', tags: '3scale' }
     - { name: 'sso', tags: 'sso', sso_realm: '3scale' }
+    - { name: '3scale', tags: '3scale' }
