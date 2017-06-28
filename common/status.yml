@@ -1,7 +1,7 @@
 ---
 
   - name: Retrieve current ReplicationController status
-    command: 'oc get rc -o json -n "{{ threescale_project }}"'
+    command: 'oc get rc -o json -n "{{ project }}"'
     register: rc_state
     changed_when: false
 
@@ -12,7 +12,7 @@
 
 
   - name: Retrieve current DeploymentConfig status
-    command: 'oc get dc -o json -n "{{ threescale_project }}"'
+    command: 'oc get dc -o json -n "{{ project }}"'
     register: dc_state
     changed_when: false
 

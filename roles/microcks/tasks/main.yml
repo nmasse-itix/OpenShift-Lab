@@ -1,0 +1,63 @@
+---
+
+  - name: Create the Microcks templates (globally)
+    command: oc create -n openshift -f {{ microcks_template_url }}
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
+
+  - name: Get a list of existing projects
+    command: oc get projects -o name
+    register: oc_get_projects
+    changed_when: false
+
+  - name: Create a new project for Microcks
+    command: oc new-project "{{ microcks_project }}"
+    when: '"project/" ~ microcks_project not in oc_get_projects.stdout_lines'
+
+  - name: Query existing deploymentconfigs
+    command: oc get dc -n "{{ microcks_project }}" -o name -l "component={{ microcks_application_name }}"
+    register: oc_get_dc
+    changed_when: false
+
+  - name: Deploy app if needed
+    set_fact:
+      deploy_needed: "{{ 'deploymentconfig/' ~ microcks_application_name not in oc_get_dc.stdout_lines }}"
+
+  - name: Process the OpenShift Template and create the OpenShift objects
+    command: oc new-app -n {{ microcks_project }} --template={{ microcks_template_name }}
+    when: deploy_needed
+
+  - name: Wait for OpenShift to create all objects
+    pause:
+      seconds: '{{ microcks_delay }}'
+    when: deploy_needed
+
+  - include: common/wait_for.yml
+    static: no
+    vars:
+      pod_to_wait:
+        - microcks
+      delay: "{{ microcks_delay }}"
+      retries: "{{ microcks_retries }}"
+      project: "{{ microcks_project }}"
+    tags: status
+
+  - name: Get Route URL
+    command: oc get route {{ microcks_application_name }} -n "{{ microcks_project }}" -o 'jsonpath={.spec.host}'
+    register: route
+    changed_when: false
+    tags:
+      - status
+      - vars
+
+  - set_fact:
+      microcks_hostname: '{{ route.stdout }}'
+    tags: vars
+
+  - include: post-install.yml
+    tags: post-install
+
+  - name: Microcks is ready !
+    debug: msg="Go to http://{{ route.stdout }}/ to start using Microcks !"
+    tags: status

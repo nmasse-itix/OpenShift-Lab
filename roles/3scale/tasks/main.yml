@@ -9,17 +9,33 @@
     command: oc new-project "{{ threescale_project }}"
     when: '"project/" ~ threescale_project not in oc_get_projects.stdout_lines'
 
+  - include: common/status.yml
+    vars:
+      project: "{{ threescale_project }}"
+    tags: status
+
+  - set_fact:
+      deploy_needed: '{{ deployment_configs|intersect(threescale_expected_deployment_configs)|length < threescale_expected_deployment_configs|length }}'
+
   - name: Process the OpenShift Template and create the OpenShift objects for the 3scale API Management Platform
     shell: oc process -f "{{ threescale_template }}" -p "TENANT_NAME={{ threescale_tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_wildcard_domain }}" -n "{{ threescale_project }}" | oc create -f - -n "{{ threescale_project }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
+    when: deploy_needed
+
+  - name: Wait for OpenShift to create all objects
+    pause:
+      seconds: '{{ threescale_delay }}'
+    when: deploy_needed
 
   # Deploy the CORS Configuration for APICast
   # This is needed to make the "Try out" feature working in the Developer Portal
   - include: apicast_cors.yml
 
-  - include: status.yml
+  - include: common/status.yml
+    vars:
+      project: "{{ threescale_project }}"
     tags: status
 
   - name: Deploy the storage tier (MySQL, Redis and Memcache) without any replicas
@@ -42,7 +58,7 @@
     when: item not in replication_controllers
     tags: rollout
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
@@ -50,6 +66,9 @@
         - system-memcache
         - system-mysql
         - system-redis
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
     tags: status
 
   - name: Deploy the backend-listener without any replicas
@@ -66,17 +85,19 @@
     when: item not in replication_controllers
     tags: rollout
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
         - backend-listener
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
     tags: status
 
   - name: Deploy everything else without any replicas
     command: oc rollout latest "{{ item }}" -n "{{ threescale_project }}"
     with_items:
-      - backend-listener
       - backend-worker
       - system-app
       - system-resque
@@ -97,13 +118,16 @@
     when: item not in replication_controllers
     tags: rollout
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
         - system-app
         - system-resque
         - system-sidekiq
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
     tags: status
 
   - name: Scale backend-cron, backend-worker and system-sphinx
@@ -115,13 +139,16 @@
     when: item not in replication_controllers
     tags: rollout
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
         - backend-worker
         - backend-cron
         - system-sphinx
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
     tags: status
 
   - name: Deploy apicast-staging, apicast-production
@@ -132,12 +159,15 @@
     when: item not in replication_controllers
     tags: rollout
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
         - apicast-staging
         - apicast-production
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
     tags: status
 
   - include: configure_apicast_for_oauth.yml
@@ -146,13 +176,33 @@
       - apicast-production
     tags: oauth
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
         - apicast-staging
         - apicast-production
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
     tags: status
+
+  - name: Get Route URL
+    command: oc get route system-provider-admin-route -n "{{ threescale_project }}" -o 'jsonpath={.spec.host}'
+    register: route
+    changed_when: false
+    tags: status
+
+  - set_fact:
+      threescale_default_backend_map:
+        microcks: http://{{ microcks_hostname }}
+    tags: vars
+
+  - include: post-install.yml
+    tags: post-install
+    vars:
+      threescale_admin_hostname: '{{ route.stdout }}'
+      threescale_backend_map: '{{ threescale_default_backend_map |combine(threescale_additional_backend_map|default({})) }}'
 
   - name: Get Admin Username
     command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'
@@ -167,5 +217,5 @@
     tags: status
 
   - name: 3scale is ready !
-    debug: msg="Login on https://{{ threescale_tenant_name }}-admin.{{ threescale_wildcard_domain }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
+    debug: msg="Login on https://{{ route.stdout }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
     tags: status

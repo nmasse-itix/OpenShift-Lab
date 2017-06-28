@@ -1,0 +1,15 @@
+---
+
+  microcks_project: microcks
+  microcks_template_url: https://raw.githubusercontent.com/microcks/microcks/master/openshift-persistent-template.json
+  microcks_template_name: microcks-persistent
+  microcks_application_name: microcks
+  microcks_delay: 5
+  microcks_retries: 30
+  microcks_sample_jobs:
+  - name: Petstore
+    repositoryUrl: https://raw.githubusercontent.com/microcks/microcks/master/samples/PetstoreAPI-collection.json
+  - name: HelloREST
+    repositoryUrl: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloAPI-soapui-project.xml
+  - name: HelloSOAP
+    repositoryUrl: https://raw.githubusercontent.com/microcks/microcks/master/samples/HelloService-soapui-project.xml

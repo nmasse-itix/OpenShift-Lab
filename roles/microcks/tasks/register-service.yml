@@ -1,0 +1,40 @@
+---
+
+  - debug: "msg='Working on service {{ item.name }}'"
+
+  - name: Check if service exists
+    uri:
+      url: "http://{{ microcks_hostname }}/api/jobs?name={{ item.name|urlencode }}"
+      method: GET
+      status_code: 200
+    register: services
+
+  - set_fact:
+      service_id: '{{ services.json[0].id }}'
+    when: services.json|length > 0
+
+  - name: Register sample service
+    uri:
+      url: http://{{ microcks_hostname }}/api/jobs
+      method: POST
+      body: "{{ item }}"
+      body_format: json
+      status_code: 201
+    register: service
+    when: services.json|length == 0
+
+  - set_fact:
+      service_id: '{{ service.json.id }}'
+    when: '"json" in service' # => service.json is defined
+
+  - name: Activate the service
+    uri:
+      url: http://{{ microcks_hostname }}/api/jobs/{{ service_id }}/activate
+      method: PUT
+      status_code: 200
+
+  - name: Start the service
+    uri:
+      url: http://{{ microcks_hostname }}/api/jobs/{{ service_id }}/start
+      method: PUT
+      status_code: 200

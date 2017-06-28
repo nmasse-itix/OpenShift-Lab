@@ -82,7 +82,7 @@
 
   - set_fact:
       user_has_been_created: true
-      user_id: "{{ response.json.id }}"
+      user_url: "{{ response.location }}"
     when: response.status == 201
 
   - name: Retrieve the id of the Demo User
@@ -97,12 +97,12 @@
     when: user_has_been_created is not defined
 
   - set_fact:
-      user_id: "{{ response.json[0].id }}"
+      user_url: "https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users/{{ response.json[0].id }}"
     when: user_has_been_created is not defined
 
   - name: Set the password of the Demo User
     uri:
-      url: https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users/{{ user_id }}/reset-password
+      url: "{{ user_url }}/reset-password"
       validate_certs: no
       headers:
         Authorization: 'Bearer {{ access_token }}'

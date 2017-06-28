@@ -1,0 +1,35 @@
+---
+
+  - debug: msg="Working on plan {{ plan.system_name }} / service {{ item.service.name }}"
+
+  - set_fact:
+      body_create_plan: '{{ body_create_plan|default("access_token=" ~ access_token|urlencode) ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
+    with_dict: '{{ plan }}'
+    loop_control:
+      loop_var: param
+    # applications is a nested hash that is used to create client applications later
+    when: 'param.key != ''applications'' and plan.system_name not in application_plans '
+
+  - name: Create the application plan
+    uri:
+      url: https://{{ threescale_admin_hostname }}/admin/api/services/{{ service_id }}/application_plans.json
+      validate_certs: no
+      method: POST
+      body: '{{ body_create_plan }}'
+      status_code: 201
+    register: response
+    when: 'plan.system_name not in application_plans'
+
+  - set_fact:
+      application_plans: '{{ application_plans|union([ plan.system_name ]) }}'
+      application_plans_details: '{{ application_plans_details|union([{ "system_name": plan.system_name, "id": response.json.application_plan.id }]) }}'
+    when: 'plan.system_name not in application_plans'
+
+  - set_fact:
+      plan_id: '{{ (application_plans_details|selectattr("system_name", "equalto", plan.system_name)|first)["id"] }}'
+
+  - include: create_applications.yml
+    with_items: '{{ plan.applications }}'
+    loop_control:
+      loop_var: app
+    when: 'app.name not in applications'

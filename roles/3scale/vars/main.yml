@@ -8,3 +8,51 @@
   threescale_retries: 30
   threescale_apicast_cors_lua: https://raw.githubusercontent.com/3scale/apicast/cors-example/examples/cors/apicast_cors.lua
   threescale_apicast_cors_conf: https://raw.githubusercontent.com/3scale/apicast/cors-example/examples/cors/cors.conf
+  threescale_expected_deployment_configs:
+    - apicast-staging
+    - apicast-production
+    - backend-redis
+    - system-memcache
+    - system-mysql
+    - system-redis
+    - backend-listener
+    - backend-worker
+    - system-app
+    - system-resque
+    - system-sidekiq
+    - backend-cron
+    - system-sphinx
+  threescale_apis_to_create:
+    - service:
+        name: "Hello API"
+        system_name: hello-api
+        backend_version: 1 # 1 means "API Key"
+      proxy:
+        credentials_location: headers
+        api_test_path: /rest/Hello%20API%20Mock/0.8/v1/hello?David
+      backend: microcks
+      application_plans:
+        - name: Default
+          system_name: default
+          default: true
+          state: published
+          applications:
+            - name: Hello App
+              description: "This is my very first application"
+    - service:
+        name: "Hello API OAuth"
+        system_name: hello-api-oauth
+        backend_version: oauth
+      proxy:
+        credentials_location: headers
+        api_test_path: /rest/Hello%20API%20Mock/0.8/v1/hello?Gavin
+      backend: microcks
+      application_plans:
+        - name: Default
+          system_name: default
+          default: true
+          state: published
+          applications:
+            - name: Hello App with OAuth
+              description: "This is my very first application using OAuth"
+              redirect_url: https://www.getpostman.com/oauth2/callback

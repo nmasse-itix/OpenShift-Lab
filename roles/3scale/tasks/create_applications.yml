@@ -1,0 +1,18 @@
+---
+
+  - debug: msg="Working on application {{ app.name }} / plan {{ plan.system_name }} / service {{ item.service.name }}"
+
+  - set_fact:
+      body_create_app: '{{ body_create_app|default("access_token=" ~ (access_token|urlencode) ~ "&plan_id=" ~ (plan_id)) ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
+    with_dict: '{{ app }}'
+    loop_control:
+      loop_var: param
+
+  - name: Create the application
+    uri:
+      url: https://{{ threescale_admin_hostname }}/admin/api/accounts/{{ account_id }}/applications.json
+      validate_certs: no
+      method: POST
+      body: '{{ body_create_app }}'
+      status_code: 201
+    register: response

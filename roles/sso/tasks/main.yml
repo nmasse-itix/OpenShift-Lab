@@ -84,15 +84,23 @@
     command: oc new-app -n {{ sso_project }} {{ sso_template }} -p "HTTPS_PASSWORD={{ sso_keystore_password }}" -p "JGROUPS_ENCRYPT_PASSWORD={{ sso_keystore_password }}" -p "SSO_REALM={{ sso_realm }}" -p "SSO_ADMIN_USERNAME={{ sso_admin_username }}" -p "APPLICATION_NAME={{ sso_application_name }}" -p "SSO_SERVICE_PASSWORD={{ sso_service_password }}" -p "SSO_SERVICE_USERNAME={{ sso_service_username }}"
     when: deploy_needed
 
+  - name: Wait for OpenShift to create all objects
+    pause:
+      seconds: '{{ sso_delay }}'
+    when: deploy_needed
+
   # Update the secure route to use "Re-encrypt" instead of "Passthrough"
   - include: update-route.yml
     tags: update-route
 
-  - include: wait_for.yml
+  - include: common/wait_for.yml
     static: no
     vars:
       pod_to_wait:
         - sso
+      delay: "{{ sso_delay }}"
+      retries: "{{ sso_retries }}"
+      project: "{{ sso_project }}"
     tags: status
 
   - name: Get Admin Username
