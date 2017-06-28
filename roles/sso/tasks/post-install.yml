@@ -1,43 +1,112 @@
 ---
-  
-  # TODO : URLENCODE
+  - name: Prepare the OAuth Request to RH-SSO (static params)
+    set_fact:
+      oauth_payload: "grant_type=password"
+
+  - name: Prepare the OAuth Request to RH-SSO (urlencode dynamic params)
+    set_fact:
+      oauth_payload: '{{ oauth_payload ~ "&" ~ item.key ~ "=" ~ (item.value|urlencode) }}'
+    with_dict:
+      client_id: '{{ sso_default_client_id }}'
+      username: '{{ sso_service_username }}'
+      password: '{{ sso_service_password }}'
+
   - name: Authenticate to RH-SSO using the service account
-    command: curl --insecure --silent --data "grant_type=password&client_id={{ sso_default_client_id }}&username={{ sso_service_username }}&password={{ sso_service_password }}" https://{{ sso_route_name }}/auth/realms/{{ sso_realm }}/protocol/openid-connect/token
+    uri:
+      url: 'https://{{ sso_route_name }}/auth/realms/{{ sso_realm }}/protocol/openid-connect/token'
+      body: '{{ oauth_payload }}'
+      method: POST
+      validate_certs: no
+      return_content: yes
     register: response
     changed_when: false
 
   - name: Extract the access_token
     set_fact:
-      access_token: '{{ response.stdout |from_json |json_query("access_token") }}'
+      access_token: '{{ response.json |json_query("access_token") }}'
 
   - debug: msg="access_token = {{ access_token }}"
 
   - name: Create an Initial Access Token in RH-SSO
-    command: 'curl --silent --insecure -H "Authorization: Bearer {{ access_token }}" -X POST --data ''{{ sso_initial_access_token_request |to_json }}'' -H ''Content-Type: application/json'' https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/clients-initial-access'
+    uri:
+      url: 'https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/clients-initial-access'
+      validate_certs: no
+      method: POST
+      body: '{{ sso_initial_access_token_request }}'
+      body_format: json
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
     register: response
 
   - name: Extract the Initial Access Token from the RH-SSO response
     set_fact:
-      initial_access_token: '{{ response.stdout |from_json |json_query("token") }}'
+      initial_access_token: '{{ response.json |json_query("token") }}'
 
   - debug: msg="initial_access_token = {{ initial_access_token }}"
 
   - name: Get the current Realm configuration
-    command: 'curl --insecure --silent -H "Authorization: Bearer {{ access_token }}" https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}'
+    uri:
+      url: 'https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}'
+      validate_certs: no
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
     register: response
 
   - name: Change the Realm configuration to extend the token lifetimes (see variable sso_default_realm_settings)
     set_fact:
-      realm_config: '{{ response.stdout |from_json |combine(sso_default_realm_settings) }}'
+      realm_config: '{{ response.json |combine(sso_default_realm_settings) }}'
 
   - name: Update the Realm configuration
-    command: 'curl --insecure --silent -o /dev/null -w "%{http_code}" -H "Authorization: Bearer {{ access_token }}" -X PUT -d ''{{ realm_config|to_json }}'' -H "Content-Type: application/json" https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}'
-    register: response
-    failed_when: response.stdout != "204"
+    uri:
+      url: 'https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}'
+      validate_certs: no
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
+      method: PUT
+      body: "{{ realm_config }}"
+      body_format: json
+      status_code: 204
 
-  # TODO : check why the password don't work
   - name: Create the Demo User
-    command: 'curl --insecure --silent -o /dev/null -w "%{http_code}" -H "Authorization: Bearer {{ access_token }}" -X POST -d ''{{ sso_demo_user|to_json }}'' -H "Content-Type: application/json" https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users'
+    uri:
+      url: https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users
+      validate_certs: no
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
+      method: POST
+      body: "{{ sso_demo_user }}"
+      body_format: json
+      status_code: "201,409"
     register: response
-    failed_when: response.stdout != "201" and response.stdout != "409" # ie. "Created" or "AlreadyExists"
-    changed_when: response.stdout == "201"
+    changed_when: response.status == 201
+
+  - set_fact:
+      user_has_been_created: true
+      user_id: "{{ response.json.id }}"
+    when: response.status == 201
+
+  - name: Retrieve the id of the Demo User
+    uri:
+      url: 'https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users?username={{ sso_demo_user.username|urlencode }}'
+      validate_certs: no
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
+    register: response
+    changed_when: false
+    failed_when: response.status != 200 or (response.json|length != 1)
+    when: user_has_been_created is not defined
+
+  - set_fact:
+      user_id: "{{ response.json[0].id }}"
+    when: user_has_been_created is not defined
+
+  - name: Set the password of the Demo User
+    uri:
+      url: https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users/{{ user_id }}/reset-password
+      validate_certs: no
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
+      method: PUT
+      body: "{{ sso_demo_user.credentials[0] }}"
+      body_format: json
+      status_code: 204

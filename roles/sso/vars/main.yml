@@ -38,6 +38,6 @@
     lastName: Doe
     enabled: true
     credentials:
-      # Currently, password don't work. TODO: investigate why
       - type: password
         value: hackthis
+        temporary: false
