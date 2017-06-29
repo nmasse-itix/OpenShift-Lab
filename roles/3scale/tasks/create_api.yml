@@ -3,7 +3,10 @@
   - debug: msg="Working on service {{ item.service.name }}"
 
   - set_fact:
-      body_create_svc: '{{ body_create_svc|default("access_token=" ~ access_token|urlencode) ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
+      body_create_svc: '{{ "access_token=" ~ access_token|urlencode }}'
+
+  - set_fact:
+      body_create_svc: '{{ body_create_svc ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
     with_dict: '{{ item.service }}'
     loop_control:
       loop_var: param
@@ -28,7 +31,10 @@
       service_id: '{{ (services_details|selectattr("system_name", "equalto", item.service.system_name)|first)["id"] }}'
 
   - set_fact:
-      body_update_proxy: '{{ body_update_proxy|default("access_token=" ~ access_token|urlencode) ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
+      body_update_proxy: '{{ "access_token=" ~ access_token|urlencode }}'
+
+  - set_fact:
+      body_update_proxy: '{{ body_update_proxy ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
     with_dict: '{{ item.proxy }}'
     loop_control:
       loop_var: param
@@ -54,15 +60,6 @@
   - set_fact:
       application_plans: '{{ response.json|json_query(''plans[*].application_plan.system_name'') }}'
       application_plans_details: '{{ response.json|json_query(''plans[].{"system_name": application_plan.system_name, "id": application_plan.id}'') }}'
-
-  - name: Get the default account
-    uri:
-      url: https://{{ threescale_admin_hostname }}/admin/api/accounts.json?access_token={{ access_token|urlencode }}&state=approved&page=1&per_page=1
-      validate_certs: no
-    register: response
-
-  - set_fact:
-      account_id: '{{ response.json.accounts[0].account.id }}'
 
   - include: create_application_plan.yml
     with_items: '{{ item.application_plans }}'
