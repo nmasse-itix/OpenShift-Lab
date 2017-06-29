@@ -32,8 +32,8 @@
     accessCodeLifespanLogin: 86400 # 1 day
     registrationAllowed: true
     rememberMe: true
-  sso_demo_user:
-    username: jdoe
+  sso_users_to_create:
+  - username: jdoe
     firstName: John
     lastName: Doe
     enabled: true
@@ -41,3 +41,13 @@
       - type: password
         value: hackthis
         temporary: false
+  sso_clients_to_create:
+  - name: Hello App with OAuth
+    description: "This is my very first application using OAuth"
+    clientId: "my-app"
+    publicClient: false
+    clientAuthenticatorType: "client-secret"
+    secret: "{{ 'my-app'|sha1() }}"
+    enabled: true
+    redirectUris:
+      - https://www.getpostman.com/oauth2/callback

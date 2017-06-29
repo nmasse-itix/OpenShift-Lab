@@ -1,0 +1,14 @@
+---
+
+  - name: Create the Demo Client
+    uri:
+      url: https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/clients
+      validate_certs: no
+      headers:
+        Authorization: 'Bearer {{ access_token }}'
+      method: POST
+      body: "{{ sso_demo_client }}"
+      body_format: json
+      status_code: "201,409"
+    register: response
+    changed_when: response.status == 201

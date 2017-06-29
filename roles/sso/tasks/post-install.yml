@@ -67,46 +67,12 @@
       body_format: json
       status_code: 204
 
-  - name: Create the Demo User
-    uri:
-      url: https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users
-      validate_certs: no
-      headers:
-        Authorization: 'Bearer {{ access_token }}'
-      method: POST
-      body: "{{ sso_demo_user }}"
-      body_format: json
-      status_code: "201,409"
-    register: response
-    changed_when: response.status == 201
+  - include: "create-user.yml"
+    with_items: '{{ sso_users_to_create }}'
+    loop_control:
+      loop_var: sso_demo_user
 
-  - set_fact:
-      user_has_been_created: true
-      user_url: "{{ response.location }}"
-    when: response.status == 201
-
-  - name: Retrieve the id of the Demo User
-    uri:
-      url: 'https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users?username={{ sso_demo_user.username|urlencode }}'
-      validate_certs: no
-      headers:
-        Authorization: 'Bearer {{ access_token }}'
-    register: response
-    changed_when: false
-    failed_when: response.status != 200 or (response.json|length != 1)
-    when: user_has_been_created is not defined
-
-  - set_fact:
-      user_url: "https://{{ sso_route_name }}/auth/admin/realms/{{ sso_realm }}/users/{{ response.json[0].id }}"
-    when: user_has_been_created is not defined
-
-  - name: Set the password of the Demo User
-    uri:
-      url: "{{ user_url }}/reset-password"
-      validate_certs: no
-      headers:
-        Authorization: 'Bearer {{ access_token }}'
-      method: PUT
-      body: "{{ sso_demo_user.credentials[0] }}"
-      body_format: json
-      status_code: 204
+  - include: "create-client.yml"
+    with_items: '{{ sso_clients_to_create }}'
+    loop_control:
+      loop_var: sso_demo_client
