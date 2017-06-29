@@ -56,3 +56,5 @@
             - name: Hello App with OAuth
               description: "This is my very first application using OAuth"
               redirect_url: https://www.getpostman.com/oauth2/callback
+              application_id: "my-app"
+              application_key: "{{ 'my-app'|sha1() }}"

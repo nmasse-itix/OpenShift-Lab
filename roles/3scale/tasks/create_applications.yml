@@ -3,7 +3,10 @@
   - debug: msg="Working on application {{ app.name }} / plan {{ plan.system_name }} / service {{ item.service.name }}"
 
   - set_fact:
-      body_create_app: '{{ body_create_app|default("access_token=" ~ (access_token|urlencode) ~ "&plan_id=" ~ (plan_id)) ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
+      body_create_app: '{{ "access_token=" ~ (access_token|urlencode) ~ "&plan_id=" ~ (plan_id) }}'
+
+  - set_fact:
+      body_create_app: '{{ body_create_app ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
     with_dict: '{{ app }}'
     loop_control:
       loop_var: param
