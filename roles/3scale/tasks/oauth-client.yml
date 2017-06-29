@@ -1,0 +1,44 @@
+---
+
+  - include: "common/status.yml"
+    vars:
+      project: "{{ threescale_project }}"
+    tags: status
+
+  - set_fact:
+      deploy_needed: '{{ deployment_configs|intersect([ "oauth-client" ])|length < 1 }}'
+    tags: status
+
+  - name: Get APICast (staging) URL
+    command: oc get route api-apicast-staging-route -n "{{ threescale_project }}" -o 'jsonpath={.spec.host}'
+    register: route
+    changed_when: false
+    when: deploy_needed
+    tags: status
+
+  - set_fact:
+      apicast_hostname: '{{ route.stdout }}'
+    tags: vars
+    when: deploy_needed
+
+  - name: Deploy the OAuth client
+    command: oc new-app -n '{{ threescale_project }}' https://github.com/3scale/apicast.git --name=oauth-client --context-dir=/examples/oauth2/client/ -e GATEWAY='https://{{ apicast_hostname }}'
+    when: deploy_needed
+
+  - name: Expose the OAuth client
+    command: oc expose service oauth-client -n '{{ threescale_project }}'
+    when: deploy_needed
+
+  - name: Get OAuth client URL
+    command: oc get route oauth-client -n "{{ threescale_project }}" -o 'jsonpath={.spec.host}'
+    register: route
+    changed_when: false
+    tags: status
+
+  - set_fact:
+      oauth_client_hostname: '{{ route.stdout }}'
+    tags: vars
+
+  - name: Patch the DeploymentConfig to add the REDIRECT_URI variable
+    command: oc env dc/oauth-client REDIRECT_URI='http://{{ oauth_client_hostname }}/callback'
+    when: deploy_needed

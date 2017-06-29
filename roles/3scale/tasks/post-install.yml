@@ -11,6 +11,9 @@
     tags: vars
 
   - include: 3scale_status.yml
-    
+
   - include: create_api.yml
     with_items: '{{ threescale_apis_to_create }}'
+
+  - include: oauth-client.yml
+    tags: oauth-client
