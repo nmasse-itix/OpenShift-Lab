@@ -15,8 +15,6 @@
   - name: Customize the OpenShift installation
     hosts: allinone
     become: yes
-    vars:
-      sso_realm: '3scale'
     roles:
     - { name: 'openshift-postinstall', tags: 'openshift-postinstall' }
     - { name: 'hostpath-provisioner', tags: 'hostpath-provisioner' }
