@@ -11,3 +11,12 @@
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (NotFound):' not in oc.stderr
     changed_when: oc.rc == 0
+
+  - name: Update the router to allow Wildcards
+    command: oc set env dc/router ROUTER_ALLOW_WILDCARD_ROUTES=true -n default
+
+  - name: Update the dnsmasq configuration to reference the wildcard DNS entry
+    template: src=wildcard.conf dest=/etc/dnsmasq.d/wildcard.conf
+
+  - name: Restart the dnsmasq service
+    service: name=dnsmasq enabled=yes state=restarted
