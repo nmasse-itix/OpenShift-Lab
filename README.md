@@ -23,6 +23,18 @@ This project is different from existing "demo" OpenShift playbooks in the sense 
 By default, this project comes with a git submodule reference to the `openshift-ansible` repository for convenience.
 But you could replace this reference with a symlink to your `openshift-ansible` installation, for instance if you installed the supported package from Red Hat.
 
+## Requirements
+
+- This playbook starts from a minimal RHEL 7.3 installation. 
+- You need at least a free disk partition to hold the docker storage (try to allocate at least 50Gi)
+- You will need at least 30Gi free disk space on /var
+
+The docker storage partition needs to be added to `docker` Volume Group. 
+To do so, if your docker storage partition is /dev/sda3, run : 
+```
+vgcreate docker /dev/sda3
+```
+
 ## Setup
 
 1. First of all, clone this repo :
