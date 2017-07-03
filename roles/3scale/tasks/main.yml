@@ -197,12 +197,29 @@
       threescale_default_backend_map:
         microcks: http://{{ microcks_hostname }}
     tags: vars
-
-  - include: post-install.yml
-    tags: post-install
-    vars:
+    
+  - set_fact:
       threescale_admin_hostname: '{{ route.stdout }}'
       threescale_backend_map: '{{ threescale_default_backend_map |combine(threescale_additional_backend_map|default({})) }}'
+    tags: vars
+
+  - name: Get the 3scale Administration Access Token
+    command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="ADMIN_ACCESS_TOKEN")].value}'
+    register: oc_get_dc
+    tags: vars
+    changed_when: false
+
+  - set_fact:
+      access_token: '{{ oc_get_dc.stdout }}'
+    tags: vars
+
+  - include: 3scale_status.yml
+
+  - include: create_api.yml
+    with_items: '{{ threescale_apis_to_create }}'
+
+  - include: oauth-client.yml
+    tags: oauth-client
 
   - name: Get Admin Username
     command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'
