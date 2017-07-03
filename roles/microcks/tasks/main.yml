@@ -25,7 +25,7 @@
       deploy_needed: "{{ 'deploymentconfig/' ~ microcks_application_name not in oc_get_dc.stdout_lines }}"
 
   - name: Process the OpenShift Template and create the OpenShift objects
-    command: oc new-app -n {{ microcks_project }} --template={{ microcks_template_name }}
+    command: oc new-app -n {{ microcks_project }} --template={{ microcks_template_name }} -p MEMORY_LIMIT=1Gi
     when: deploy_needed
 
   - name: Wait for OpenShift to create all objects
@@ -38,6 +38,7 @@
     vars:
       pod_to_wait:
         - microcks
+        - microcks-mongodb
       delay: "{{ microcks_delay }}"
       retries: "{{ microcks_retries }}"
       project: "{{ microcks_project }}"
