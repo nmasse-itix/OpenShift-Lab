@@ -197,7 +197,7 @@
       threescale_default_backend_map:
         microcks: http://{{ microcks_hostname }}
     tags: vars
-    
+
   - set_fact:
       threescale_admin_hostname: '{{ route.stdout }}'
       threescale_backend_map: '{{ threescale_default_backend_map |combine(threescale_additional_backend_map|default({})) }}'
@@ -234,5 +234,5 @@
     tags: status
 
   - name: 3scale is ready !
-    debug: msg="Login on https://{{ route.stdout }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
+    debug: msg="Login on https://{{ threescale_admin_hostname }} with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
     tags: status
