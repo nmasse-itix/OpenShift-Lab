@@ -1,13 +1,13 @@
 ---
 
   - name: Download 'apicast_cors.lua'
-    get_url: dest=apicast_cors.lua url={{ threescale_apicast_cors_lua }}
+    get_url: dest='/home/{{ ansible_user }}/apicast_cors.lua' url={{ threescale_apicast_cors_lua }}
 
   - name: Download 'cors.conf'
-    get_url: dest=cors.conf url={{ threescale_apicast_cors_conf }}
+    get_url: dest='/home/{{ ansible_user }}/cors.conf' url={{ threescale_apicast_cors_conf }}
 
   - name: Create ConfigMap 'apicast-cors'
-    command: oc create configmap apicast-cors --from-file=apicast_cors.lua -n "{{ threescale_project }}"
+    command: chdir=/home/{{ ansible_user }}/ oc create configmap apicast-cors --from-file=apicast_cors.lua -n "{{ threescale_project }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
