@@ -121,11 +121,12 @@
     changed_when: false
     tags: status
 
+  - set_fact:
+      sso_route_name: '{{ route.stdout }}'
+
   - name: SSO is ready !
-    debug: msg="Login on https://{{ route.stdout }}/auth/admin with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
+    debug: msg="Login on https://{{ sso_route_name }}/auth/admin with username = '{{ username.stdout }}' and password = '{{ password.stdout }}'"
     tags: status
 
   - include: post-install.yml
-    vars:
-      sso_route_name: "{{ route.stdout }}"
     tags: post-install
