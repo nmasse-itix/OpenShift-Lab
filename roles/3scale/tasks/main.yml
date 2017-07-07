@@ -151,6 +151,12 @@
       project: "{{ threescale_project }}"
     tags: status
 
+  - include: configure_apicast_for_oauth.yml
+    with_items:
+      - apicast-staging
+      - apicast-production
+    tags: oauth
+
   - name: Deploy apicast-staging, apicast-production
     command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
@@ -158,23 +164,6 @@
       - apicast-production
     when: item not in replication_controllers
     tags: rollout
-
-  - include: common/wait_for.yml
-    static: no
-    vars:
-      pod_to_wait:
-        - apicast-staging
-        - apicast-production
-      delay: "{{ threescale_delay }}"
-      retries: "{{ threescale_retries }}"
-      project: "{{ threescale_project }}"
-    tags: status
-
-  - include: configure_apicast_for_oauth.yml
-    with_items:
-      - apicast-staging
-      - apicast-production
-    tags: oauth
 
   - include: common/wait_for.yml
     static: no
@@ -220,6 +209,9 @@
 
   - include: oauth-client.yml
     tags: oauth-client
+
+  - include: webhooks.yml
+    tags: webhooks
 
   - name: Get Admin Username
     command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'

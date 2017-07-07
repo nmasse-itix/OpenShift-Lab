@@ -8,6 +8,7 @@
   threescale_retries: 30
   threescale_apicast_cors_lua: https://raw.githubusercontent.com/3scale/apicast/cors-example/examples/cors/apicast_cors.lua
   threescale_apicast_cors_conf: https://raw.githubusercontent.com/3scale/apicast/cors-example/examples/cors/cors.conf
+  threescale_webhooks_secret: supersecret
   threescale_expected_deployment_configs:
     - apicast-staging
     - apicast-production

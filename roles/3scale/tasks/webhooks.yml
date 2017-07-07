@@ -1,0 +1,52 @@
+---
+
+  - include: "common/status.yml"
+    vars:
+      project: "{{ threescale_project }}"
+    tags: status
+
+  - set_fact:
+      deploy_needed: '{{ deployment_configs|intersect([ "webhooks" ])|length < 1 }}'
+    tags: status
+
+  - name: Deploy the Webhooks service
+    command: oc new-app -n '{{ threescale_project }}' https://github.com/nmasse-itix/3scale-webhooks-sample.git --name=webhooks -e SSO_REALM={{ sso_realm }} -e SSO_HOSTNAME={{ sso_route_name }} -e SSO_SERVICE_USERNAME={{ sso_service_username }} -e SSO_SERVICE_PASSWORD={{ sso_service_password }} -e SSO_CLIENT_ID={{ sso_default_client_id }} -e SHARED_SECRET={{ threescale_webhooks_secret }} -e WEBHOOKS_MODULES=log,sso
+    when: deploy_needed
+
+  - name: Expose the Webhooks service
+    command: oc expose service webhooks -n '{{ threescale_project }}'
+    when: deploy_needed
+
+  - name: Get Webhooks service URL
+    command: oc get route webhooks -n "{{ threescale_project }}" -o 'jsonpath={.spec.host}'
+    register: route
+    changed_when: false
+    tags: status
+
+  - set_fact:
+      webhooks_hostname: '{{ route.stdout }}'
+    tags: vars
+
+  - set_fact:
+      body_set_webhook: '{{ "access_token=" ~ access_token|urlencode }}'
+
+  - set_fact:
+      body_set_webhook: '{{ body_set_webhook ~ "&" ~ (param.key|urlencode) ~ "=" ~ (param.value|urlencode) }}'
+    with_dict:
+      url: http://{{ webhooks_hostname }}/webhook?shared_secret={{ threescale_webhooks_secret }}
+      active: "true"
+      provider_actions: "true"
+      application_created_on: "true"
+      application_updated_on: "true"
+      application_deleted_on: "true"
+    loop_control:
+      loop_var: param
+
+  - name: Update the webhooks settings
+    uri:
+      url: https://{{ threescale_admin_hostname }}/admin/api/webhooks.json
+      validate_certs: no
+      method: PUT
+      body: '{{ body_set_webhook }}'
+      status_code: 200
+    register: response
