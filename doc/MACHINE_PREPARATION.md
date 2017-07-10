@@ -5,7 +5,13 @@ Currently, the machines needs to have at least 2 disk partitions :
  - 1 LVM partition for the Docker Storage (**REQUIRED**)
 
 A third partition is recommended but not required :
- - 1 partition for the OpenShift Persistent Volumes (**OPTIONAL**)
+ - 1 partition for the OpenShift Persistent Volumes (**OPTIONAL**),
+
+Minimal requirements :
+ - the Docker Storage partition has to be at least 50 GiB
+ - the OpenShift Persistent Volumes partition has to be at least 30 GiB (**OPTIONAL**)
+ - the Operating System partition has to be at least 10 GiB if you have a dedicated
+   partition for OpenShift PVs, 40 GiB otherwise.
 
 If your machine has only one disk, you can create partitions (that may use LVM underneath or not, free choice).
 An alternative when using Virtual Machines is to add 3 disks to the VM, the setup is a bit easier.
@@ -34,3 +40,6 @@ If you kept the default values (`docker` for the Volume Group name and
 Otherwise, you might have to set the following variables in your inventory file :
  - `docker_storage_vg`
  - `hostpath_provisioner_options`
+
+See the (Sample Partitioning Guide)[doc/SAMPLE_PARTITIONING.md] for a step-by-step guide on how to prepare
+partitions for OpenShift.
