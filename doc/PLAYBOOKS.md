@@ -26,18 +26,18 @@ This playbook is best used with the [Ansible Wrapper](ANSIBLE_WRAPPER.md).
 
 ## All-in-one cluster (`allinone.yml`)
 
-The All-in-one cluster playbook will deploy everyting on one machine. It is very
+The All-in-one cluster playbook will deploy everything on one machine. It is very
 convenient for development or PoC where the focus is on the features rather than on the infrastructure.
 
 Minimal requirements for the target machine are :
  - 2 Cores
  - 4 GB of RAM
- - 30 GB Hard Disk, partitioned as explained in the [Machine Preparation Guide](MACHINE_PREPARATION.md)
+ - Hard Disk partitioned as explained in the [Machine Preparation Guide](MACHINE_PREPARATION.md)
 
 Recommended config :
  - 4 Cores
  - 10 GB of RAM
- - 60 GB Hard Disk, partitioned as explained in the [Machine Preparation Guide](MACHINE_PREPARATION.md)
+ - Hard Disk partitioned as explained in the [Machine Preparation Guide](MACHINE_PREPARATION.md)
 
 See [Machine Preparation Guide](MACHINE_PREPARATION.md) for more details about partitioning.
 
