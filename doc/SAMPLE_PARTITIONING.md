@@ -13,7 +13,7 @@ It assumes you created a Virtual Machines with three disks :
 `/dev/sda` is partitioned during installation. If possible, use LVM that will
 give you greater flexibility if you need to extend that partition later.
 
-Make sure to **NOT** allocate swap space since it is a (recommended best practice)[https://docs.openshift.com/container-platform/3.5/admin_guide/overcommit.html#disabling-swap-memory].
+Make sure to **NOT** allocate swap space since it is a [recommended best practice](https://docs.openshift.com/container-platform/3.5/admin_guide/overcommit.html#disabling-swap-memory).
 
 After installation, you should have :
  - `/boot` backed by a primary partition, 512 MiB

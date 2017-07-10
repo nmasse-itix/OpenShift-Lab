@@ -41,5 +41,5 @@ Otherwise, you might have to set the following variables in your inventory file 
  - `docker_storage_vg`
  - `hostpath_provisioner_options`
 
-See the (Sample Partitioning Guide)[doc/SAMPLE_PARTITIONING.md] for a step-by-step guide on how to prepare
+See the [Sample Partitioning Guide](SAMPLE_PARTITIONING.md) for a step-by-step guide on how to prepare
 partitions for OpenShift.
