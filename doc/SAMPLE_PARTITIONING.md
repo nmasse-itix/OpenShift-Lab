@@ -88,7 +88,7 @@ sudo vgcreate storage /dev/sdb1
 
 Create a new Logical Volume:
 ```
-sudo lvcreate storage -n openshift -l %FREE
+sudo lvcreate storage -n openshift -l 100%FREE
 ```
 
 Format it:
@@ -107,7 +107,7 @@ Finalize the setup:
 sudo mkdir /var/openshift
 sudo mount /var/openshift
 sudo chmod 777 -R /var/openshift
-sudo chcon -Rt svirt_sandix_file_t /var/openshift
+sudo chcon -Rt svirt_sandbox_file_t /var/openshift
 ```
 
 __You can now partition `/dev/sdc` (Docker Storage):__
