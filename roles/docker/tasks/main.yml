@@ -1,13 +1,5 @@
 ---
 
-  - name: Check for mandatory variables required by this playbook
-    fail:
-      msg: "This playbook requires {{item}} to be set."
-    when: "item is not defined or item == ''"
-    with_items:
-    - docker_storage_vg
-    tags: docker-storage
-
   - name: Make sure the extra repos is enabled
     command: subscription-manager repos --enable rhel-7-server-extras-rpms
     when: "ansible_os_family == 'RedHat'"
@@ -21,14 +13,14 @@
     service: name=docker state=started
     tags: docker-storage
 
-  - name: Determine if docker storage driver == devicemapper
+  - name: Determine if the docker storage driver is the correct one
     shell: docker info
     register: docker_info
     changed_when: false
 
   - name: set docker_storage_setup_needs_to_run
     set_fact:
-      docker_storage_setup_needs_to_run: '{{ docker_info.stdout.find(''Storage Driver: devicemapper'') == -1 or docker_info.stdout.find(''Data file: /dev/loop'') != -1 }}'
+      docker_storage_setup_needs_to_run: '{{ docker_info.stdout.find(''Storage Driver: '' ~ docker_storage_driver) == -1 or docker_info.stdout.find(''Data file: /dev/loop'') != -1 }}'
     tags: docker-storage
 
   - name: stop docker
@@ -43,7 +35,7 @@
     when: docker_storage_setup_needs_to_run
     tags: docker-storage
 
-  - name: Configure docker-storage-setup to use LVM
+  - name: Configure docker-storage-setup to use the correct storage driver
     template: dest=/etc/sysconfig/docker-storage-setup src=docker-storage-setup
     register: docker-storage-setup
     when: docker_storage_setup_needs_to_run
