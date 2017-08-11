@@ -1,10 +1,4 @@
 ---
-  - name: This module has only been tested on RHEL 7.3 x64
-    assert:
-      that:
-        - "ansible_userspace_bits == '64'"
-        - "ansible_os_family == 'RedHat'"
-        - "ansible_distribution_version == '7.3'"
 
   - name: Tell SSHD not to use DNS
     lineinfile: dest=/etc/ssh/sshd_config regexp="^#* *UseDNS +" line="UseDNS no"
