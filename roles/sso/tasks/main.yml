@@ -45,7 +45,7 @@
 
   - name: Create a new project for SSO
     command: oc new-project "{{ sso_project }}"
-    when: '"project/" ~ sso_project not in oc_get_projects.stdout_lines'
+    when: '"projects/" ~ sso_project not in oc_get_projects.stdout_lines'
 
   - name: Query existing deploymentconfigs
     command: oc get dc -n "{{ sso_project }}" -o name -l "application={{ sso_application_name }}"
@@ -54,7 +54,7 @@
 
   - name: Deploy app if needed
     set_fact:
-      deploy_needed: "{{ 'deploymentconfig/' ~ sso_application_name not in oc_get_dc.stdout_lines }}"
+      deploy_needed: "{{ 'deploymentconfigs/' ~ sso_application_name not in oc_get_dc.stdout_lines }}"
 
   - name: Create a service account for SSO
     command: oc create serviceaccount sso-service-account -n "{{ sso_project }}"

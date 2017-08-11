@@ -13,7 +13,7 @@
 
   - name: Create a new project for Microcks
     command: oc new-project "{{ microcks_project }}"
-    when: '"project/" ~ microcks_project not in oc_get_projects.stdout_lines'
+    when: '"projects/" ~ microcks_project not in oc_get_projects.stdout_lines'
 
   - name: Query existing deploymentconfigs
     command: oc get dc -n "{{ microcks_project }}" -o name -l "component={{ microcks_application_name }}"
@@ -22,7 +22,7 @@
 
   - name: Deploy app if needed
     set_fact:
-      deploy_needed: "{{ 'deploymentconfig/' ~ microcks_application_name not in oc_get_dc.stdout_lines }}"
+      deploy_needed: "{{ 'deploymentconfigs/' ~ microcks_application_name not in oc_get_dc.stdout_lines }}"
 
   - name: Process the OpenShift Template and create the OpenShift objects
     command: oc new-app -n {{ microcks_project }} --template={{ microcks_template_name }} -p MEMORY_LIMIT=1Gi

@@ -7,7 +7,7 @@
 
   - name: Create a new project for 3scale
     command: oc new-project "{{ threescale_project }}"
-    when: '"project/" ~ threescale_project not in oc_get_projects.stdout_lines'
+    when: '"projects/" ~ threescale_project not in oc_get_projects.stdout_lines'
 
   - include: common/status.yml
     vars:
