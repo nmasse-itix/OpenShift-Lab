@@ -1,6 +1,6 @@
 ---
   # Check that the system running this playbook meets our requirements
-  # (see issues #5 and #8)
+  # (see issues #5 and #9)
   - include: "common/verify-local-requirements.yml"
 
   - name: Prepare an "All-in-one" VM for OpenShift

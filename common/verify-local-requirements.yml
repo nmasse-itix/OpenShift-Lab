@@ -34,7 +34,7 @@
      when: 'jmespath_missing and not on_rhel7'
 
    - fail:
-       msg: "This playbook can install by itself the missing packages on RHEL 7.x but we are not on such system (detected OS : {{ansible_distribution}} {{ansible_distribution_version}}). See https://github.com/nmasse-itix/OpenShift-Lab/issues/8 for more information."
+       msg: "This playbook can install by itself the missing packages on RHEL 7.x but we are not on such system (detected OS : {{ansible_distribution}} {{ansible_distribution_version}}). See https://github.com/nmasse-itix/OpenShift-Lab/issues/9 for more information."
      when: 'jinja28_missing and not on_rhel7'
 
    - name: Enable the RHSCL repo
