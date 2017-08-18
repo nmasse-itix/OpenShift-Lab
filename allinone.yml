@@ -1,6 +1,7 @@
 ---
-  # Check that jmespath is installed locally (see issue #5)
-  - include: "common/install-jmespath.yml"
+  # Check that the system running this playbook meets our requirements
+  # (see issues #5 and #8)
+  - include: "common/verify-local-requirements.yml"
 
   - name: Prepare an "All-in-one" VM for OpenShift
     hosts: allinone
