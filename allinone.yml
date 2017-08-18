@@ -1,4 +1,6 @@
 ---
+  # Check that jmespath is installed locally (see issue #5)
+  - include: "common/install-jmespath.yml"
 
   - name: Prepare an "All-in-one" VM for OpenShift
     hosts: allinone

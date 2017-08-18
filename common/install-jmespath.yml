@@ -1,0 +1,39 @@
+---
+
+ - hosts: localhost
+   connection: local
+   tasks:
+
+   - name: Check if jmespath is installed locally
+     debug: msg={{dummy|json_query('@')}}
+     register: check
+     ignore_errors: yes
+     vars:
+       dummy: Hello World
+
+   - set_fact:
+       jmespath_missing: '{{ check|failed }}'
+       on_rhel7: '{{ ansible_distribution == ''RedHat'' and ansible_lsb.major_release|int == 7 }}'
+
+   - debug:
+       msg: "jmespath is not installed on the machine that runs the playbooks"
+     when: jmespath_missing
+
+   - fail:
+       msg: "This playbook can install by itself the missing packages on RHEL 7.x but we are not on such system (detected OS : {{ansible_distribution}} {{ansible_distribution_version}}). See https://github.com/nmasse-itix/OpenShift-Lab/issues/5 for more information."
+     when: 'jmespath_missing and not on_rhel7'
+
+   - name: Enable the RHSCL repo
+     command: subscription-manager repos --enable rhel-server-rhscl-7-rpms
+     become: yes
+     when: 'jmespath_missing and on_rhel7'
+
+   - name: Install PIP
+     yum: name=python27-python-pip state=installed
+     become: yes
+     when: 'jmespath_missing and on_rhel7'
+
+   - name: Install JMESPATH and update Jinja
+     command: 'scl enable python27 ''pip install --install-option="--install-purelib=/usr/lib/python2.7/site-packages/" jinja2 jmespath'' '
+     become: yes
+     when: 'jmespath_missing and on_rhel7'
