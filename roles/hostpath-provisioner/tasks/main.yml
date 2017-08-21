@@ -3,8 +3,21 @@
   - name: Create a directory for the hostpath-provisioner
     file: state=directory path={{ hostpath_provisioner_path }} owner=root group=root mode=0777 setype=svirt_sandbox_file_t
 
+  - name: Query existing deploymentconfigs
+    command: oc get daemonset -n "{{ hostpath_provisioner_target_namespace }}" -o name -l "name=hostpath-provisioner"
+    register: oc_get_daemonset
+    changed_when: false
+
+  - name: Deploy app if needed
+    set_fact:
+      deploy_needed: "{{ 'daemonsets/hostpath-provisioner' not in oc_get_daemonset.stdout_lines }}"
+
   - name: Process the OpenShift Template and create the OpenShift objects for the hostpath-provisioner
     shell: oc process -f "{{ hostpath_provisioner_template }}" -p "HOSTPATH_TO_USE={{ hostpath_provisioner_path }}" -p "TARGET_NAMESPACE={{ hostpath_provisioner_target_namespace }}" -p "HOSTPATH_PROVISIONER_IMAGE={{ hostpath_provisioner_docker_image }}" | oc create -f -
+    when: deploy_needed
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
 
   - name: Copy the PersistentVolumeClaim object definition
     copy: src=registry-storage-pvc.yaml dest=/tmp/registry-storage-pvc.yaml
@@ -12,8 +25,11 @@
 
   - name: Create a PersistentVolumeClaim for the docker-registry
     command: oc create -n default -f /tmp/registry-storage-pvc.yaml
-    when: hostpath_provisioner_options.patch_docker_registry
+    when: hostpath_provisioner_patch_docker_registry
+    register: oc
+    failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
+    changed_when: oc.rc == 0
 
   - name: Add the new volume to docker-registry
     command: oc volume dc docker-registry -n default --add=true --overwrite=true --type=persistentVolumeClaim --name=registry-storage --claim-name=registry-storage
-    when: hostpath_provisioner_options.patch_docker_registry
+    when: hostpath_provisioner_patch_docker_registry
