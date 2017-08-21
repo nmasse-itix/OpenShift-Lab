@@ -1,8 +1,7 @@
 ---
 
-  hostpath_provisioner_default_options:
-    path: /var/openshift
-    target_namespace: default
-    docker_image: nmasse/openshift-hostpath-provisioner:latest
-    template: https://raw.githubusercontent.com/nmasse-itix/OpenShift-HostPath-Provisioner/master/setup/hostpath-provisioner-template.yaml
-    patch_docker_registry: true
+  hostpath_provisioner_path: /var/openshift
+  hostpath_provisioner_target_namespace: default
+  hostpath_provisioner_docker_image: nmasse/openshift-hostpath-provisioner:latest
+  hostpath_provisioner_template: https://raw.githubusercontent.com/nmasse-itix/OpenShift-HostPath-Provisioner/master/setup/hostpath-provisioner-template.yaml
+  hostpath_provisioner_patch_docker_registry: true
