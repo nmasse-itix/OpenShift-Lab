@@ -1,6 +1,7 @@
 ---
 
-  threescale_template: https://raw.githubusercontent.com/nmasse-itix/OpenShift-Lab/master/roles/3scale/files/amp.json
+  threescale_template: https://raw.githubusercontent.com/3scale/3scale-amp-openshift-templates/2.0.0.GA/amp/amp.yml
+  threescale_template_format: YAML
   threescale_project: 3scale
   threescale_tenant_name: 3scale
   threescale_wildcard_domain: "{{ openshift_master_default_subdomain }}"

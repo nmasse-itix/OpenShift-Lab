@@ -17,8 +17,57 @@
   - set_fact:
       deploy_needed: '{{ deployment_configs|intersect(threescale_expected_deployment_configs)|length < threescale_expected_deployment_configs|length }}'
 
+  - name: Fetch the latest 3scale AMP template from the 3scale repo
+    uri: url={{threescale_template}} return_content=yes
+    register: template
+
+  - name: Parse the YAML file
+    set_fact:
+      template: '{{template.content |from_yaml }}'
+    when: "threescale_template_format|upper == 'YAML'"
+
+  - name: Parse the JSON file
+    set_fact:
+      template: '{{template.content |from_json }}'
+    when: "threescale_template_format|upper == 'JSON'"
+
+  - name: Disable the triggers and set the replicas to 0
+    set_fact:
+      template: >-
+        {% for obj in template.objects -%}
+        {% if obj.kind == 'DeploymentConfig' -%}
+          {% if obj.spec.update({'replicas': 0, 'triggers': []}) -%}{% endif -%}
+        {% endif -%}
+        {% endfor -%}
+        {{ template }}
+
+  - name: Patch the template to workaround the subPath bug (https://bugzilla.redhat.com/show_bug.cgi?id=1481617)
+    set_fact:
+      template: >-
+        {% for obj in template.objects -%}
+        {% if obj.kind == 'DeploymentConfig' -%}
+          {% for c in obj.spec.template.spec.containers -%}
+            {% if 'volumeMounts' in c -%}
+              {% for m in c.volumeMounts -%}
+                {% if 'subPath' in m -%}
+                  {% if m.update({'subPath': ('..data/' ~ m.subPath) }) -%}{% endif -%}
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
+          {% endfor -%}
+        {% endif -%}
+        {% endfor -%}
+        {{ template }}
+
+  - name: Create a temporary directory
+    tempfile: state=directory
+    register: tempfile
+
+  - name: Write the template
+    template: src=amp.json dest={{tempfile.path}}/amp.json
+
   - name: Process the OpenShift Template and create the OpenShift objects for the 3scale API Management Platform
-    shell: oc process -f "{{ threescale_template }}" -p "TENANT_NAME={{ threescale_tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_wildcard_domain }}" -n "{{ threescale_project }}" | oc create -f - -n "{{ threescale_project }}"
+    shell: oc process -f "{{tempfile.path}}/amp.json" -p "TENANT_NAME={{ threescale_tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_wildcard_domain }}" -n "{{ threescale_project }}" | oc create -f - -n "{{ threescale_project }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
