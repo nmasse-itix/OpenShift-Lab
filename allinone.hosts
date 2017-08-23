@@ -18,7 +18,6 @@ openshift_master_default_subdomain=app.openshift.test
 # The SSH user that Ansible will use to run playbooks
 ansible_ssh_user=redhat
 
-
 [masters]
 openshift36.openshift.test
 
@@ -70,3 +69,11 @@ openshift_additional_projects={}
 
 # Choose the default networking plugin so that all projects can communicate with eachother
 os_sdn_network_plugin_name='redhat/openshift-ovs-subnet'
+
+# Deploy the metrics
+openshift_metrics_install_metrics=True
+openshift_metrics_start_cluster=True
+
+# Metrics storage is provisioned through the hostpath-provisioner
+openshift_metrics_cassandra_pvc_size=10Gi
+openshift_metrics_cassandra_storage_type=dynamic

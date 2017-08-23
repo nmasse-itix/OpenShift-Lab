@@ -15,6 +15,11 @@
   # Launch the OpenShift Installer Playbook
   - include: "./openshift-ansible/playbooks/byo/config.yml"
 
+  - include: "./openshift-ansible/playbooks/byo/openshift-cluster/openshift-metrics.yml"
+    vars:
+      # The hostname to allocate to hawkular (one of the components enabling metrics monitoring)
+      openshift_metrics_hawkular_hostname: "{{ 'hawkular-metrics.' ~ lab_dns_suffix }}"
+
   - name: Customize the OpenShift installation
     hosts: allinone
     become: yes
