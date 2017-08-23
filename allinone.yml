@@ -24,3 +24,6 @@
     - { name: 'microcks', tags: 'microcks' }
     - { name: 'sso', tags: 'sso' }
     - { name: '3scale', tags: '3scale' }
+
+  # Update OpenShift to the latest asynchronous errata updates
+  - include: "./openshift-ansible/playbooks/byo/openshift-cluster/upgrades/v3_6/upgrade.yml"

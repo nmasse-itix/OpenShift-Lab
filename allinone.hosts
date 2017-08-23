@@ -3,8 +3,7 @@
 #
 [allinone:vars]
 lab_dns_suffix=openshift.test
-lab_openshift_version=3.5
-docker_storage_vg=docker
+lab_openshift_version=3.6
 
 [allinone:children]
 masters
@@ -21,10 +20,10 @@ ansible_ssh_user=redhat
 
 
 [masters]
-openshift35.openshift.test
+openshift36.openshift.test
 
 [nodes]
-openshift35.openshift.test openshift_schedulable=true openshift_node_labels="{'region': 'infra'}"
+openshift36.openshift.test openshift_schedulable=true openshift_node_labels="{'region': 'infra'}"
 
 #
 # The rest is used only by the OpenShift installer playbook
@@ -34,6 +33,17 @@ masters
 nodes
 
 [OSEv3:vars]
+# By default, OpenShift 3.6 checks that 16GB of memory is available,
+# which is way too much on a standard laptop...
+# It also checks for disk space on /var which can be an issue for a lab environment.
+openshift_disable_check=memory_availability,disk_availability
+
+# Deploy the Service Catalog (Warning: Tech Preview in OCP 3.6)
+openshift_enable_service_catalog=true
+
+# Use the hostpath-provisioner to allocate storage for the Service Catalog
+openshift_hosted_etcd_storage_kind=dynamic
+
 # Yes, we need to use sudo
 ansible_become=yes
 
