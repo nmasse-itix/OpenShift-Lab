@@ -20,12 +20,14 @@
     register: patched
     changed_when: false
 
+  # TODO: Temporary fix for https://bugzilla.redhat.com/show_bug.cgi?id=1481617. Remove as soon as the bug is fixed (see #13) !
   - name: Patch volume 'apicast-cors'
-    command: 'oc patch dc/{{ item }} -n {{ threescale_project }} --type=json -p ''[ {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/0/subPath", "value":"apicast_cors.lua"} ]'' '
+    command: 'oc patch dc/{{ item }} -n {{ threescale_project }} --type=json -p ''[ {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/0/subPath", "value":"..data/apicast_cors.lua"} ]'' '
     when: "'apicast-cors' not in patched.stdout_lines"
 
+  # TODO: Temporary fix for https://bugzilla.redhat.com/show_bug.cgi?id=1481617. Remove as soon as the bug is fixed (see #13) !
   - name: Patch volume 'cors-conf'
-    command: 'oc patch dc/{{ item }} -n {{ threescale_project }} --type=json -p ''[ {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/1/subPath", "value":"cors.conf"} ]'' '
+    command: 'oc patch dc/{{ item }} -n {{ threescale_project }} --type=json -p ''[ {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/1/subPath", "value":"..data/cors.conf"} ]'' '
     when: "'cors-conf' not in patched.stdout_lines"
 
   - name: Add environment variable APICAST_MODULE to the APICast DeploymentConfig
