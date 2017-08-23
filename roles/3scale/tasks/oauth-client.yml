@@ -25,6 +25,21 @@
     command: oc new-app -n '{{ threescale_project }}' https://github.com/3scale/apicast.git --name=oauth-client --context-dir=/examples/oauth2/client/ -e GATEWAY='https://{{ apicast_hostname }}'
     when: deploy_needed
 
+  - name: Wait for OpenShift to create all objects
+    pause:
+      seconds: '{{ threescale_delay }}'
+    when: deploy_needed
+
+  - include: common/wait_for.yml
+    static: no
+    vars:
+      pod_to_wait:
+        - oauth-client
+      delay: "{{ threescale_delay }}"
+      retries: "{{ threescale_retries }}"
+      project: "{{ threescale_project }}"
+    tags: status
+
   - name: Expose the OAuth client
     command: oc expose service oauth-client -n '{{ threescale_project }}'
     when: deploy_needed
