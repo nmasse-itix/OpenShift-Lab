@@ -23,7 +23,7 @@
    - set_fact:
        jmespath_missing: '{{ check_jmespath|failed }}'
        jinja28_missing: '{{ check_jinja28|failed }}'
-       on_rhel7: '{{ ansible_distribution == ''RedHat'' and ansible_lsb.major_release|int == 7 }}'
+       on_rhel7: '{{ ansible_distribution == ''RedHat'' and ansible_distribution_major_version|int == 7 }}'
 
    - debug:
        msg: "jmespath is not installed on the machine that runs the playbooks"
