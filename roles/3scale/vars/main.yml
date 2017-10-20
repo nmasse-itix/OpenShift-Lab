@@ -7,7 +7,7 @@
   threescale_wildcard_domain: "{{ openshift_master_default_subdomain }}"
   threescale_delay: 5
   threescale_retries: 30
-  threescale_apicast_cors_lua: https://raw.githubusercontent.com/3scale/apicast/master/examples/cors/apicast_cors.lua
+  threescale_apicast_cors_lua: https://raw.githubusercontent.com/3scale/apicast/master/examples/cors/cors.lua
   threescale_apicast_cors_conf: https://raw.githubusercontent.com/3scale/apicast/master/examples/cors/cors.conf
   threescale_webhooks_secret: supersecret
   threescale_expected_deployment_configs:

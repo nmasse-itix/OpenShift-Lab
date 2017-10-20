@@ -7,28 +7,13 @@
     register: volumes
     changed_when: false
 
-  - name: Add volume 'apicast-cors'
-    command: 'oc set volume dc/{{ item }} -n {{ threescale_project }} --add --name=apicast-cors --mount-path /opt/app-root/src/src/apicast_cors.lua --source=''{"configMap":{"name":"apicast-cors","items":[{"key":"apicast_cors.lua","path":"apicast_cors.lua"}]}}'' '
-    when: "'apicast-cors' not in volumes.stdout_lines"
+  - name: Add volume 'apicast-custom-module'
+    command: 'oc set volume dc/{{ item }} -n {{ threescale_project }} --add --name=apicast-custom-module --mount-path /opt/app-root/src/src/custom/ --configmap-name=apicast-custom-module  -t configmap'
+    when: "'apicast-custom-module' not in volumes.stdout_lines"
 
-  - name: Add volume 'cors-conf'
-    command: 'oc set volume dc/{{ item }} -n {{ threescale_project }} --add --name=cors-conf --mount-path /opt/app-root/src/apicast.d/cors.conf --source=''{"configMap":{"name":"cors-conf","items":[{"key":"cors.conf","path":"cors.conf"}]}}'' '
-    when: "'cors-conf' not in volumes.stdout_lines"
-
-  - name: Check if APICast's DC has already been patched
-    command: oc get dc {{ item }} -o jsonpath='{range .spec.template.spec.containers[*].volumeMounts[?(@.subPath)]}{.name}{"\n"}{end}' -n "{{ threescale_project }}"
-    register: patched
-    changed_when: false
-
-  # TODO: Temporary fix for https://bugzilla.redhat.com/show_bug.cgi?id=1481617. Remove as soon as the bug is fixed (see #13) !
-  - name: Patch volume 'apicast-cors'
-    command: 'oc patch dc/{{ item }} -n {{ threescale_project }} --type=json -p ''[ {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/0/subPath", "value":"..data/apicast_cors.lua"} ]'' '
-    when: "'apicast-cors' not in patched.stdout_lines"
-
-  # TODO: Temporary fix for https://bugzilla.redhat.com/show_bug.cgi?id=1481617. Remove as soon as the bug is fixed (see #13) !
-  - name: Patch volume 'cors-conf'
-    command: 'oc patch dc/{{ item }} -n {{ threescale_project }} --type=json -p ''[ {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/1/subPath", "value":"..data/cors.conf"} ]'' '
-    when: "'cors-conf' not in patched.stdout_lines"
+  - name: Add volume 'apicastd'
+    command: 'oc set volume dc/{{ item }} -n {{ threescale_project }} --add --name=apicastd --mount-path /opt/app-root/src/apicast.d/ --configmap-name=apicast.d  -t configmap'
+    when: "'apicastd' not in volumes.stdout_lines"
 
   - name: Add environment variable APICAST_MODULE to the APICast DeploymentConfig
-    command: oc env dc/{{ item }} APICAST_MODULE=apicast_cors -n {{ threescale_project }}
+    command: oc env dc/{{ item }} APICAST_MODULE=custom/cors -n {{ threescale_project }}
