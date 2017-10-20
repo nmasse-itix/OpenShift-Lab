@@ -1,5 +1,21 @@
 ---
 
+  - name: Create a temporary directory
+    tempfile:
+      state: directory
+    register: tempfile
+    when: 'is_offline|default(False)|bool'
+
+  - name: Push the JBoss ImageStreams to the target
+    copy:
+      src: '{{ jboss_image_streams }}'
+      dest: '{{ tempfile.path }}/{{ jboss_image_streams|basename }}'
+    when: 'is_offline|default(False)|bool'
+
+  - set_fact:
+      jboss_image_streams: '{{ tempfile.path }}/{{ jboss_image_streams|basename }}'
+    when: 'is_offline|default(False)|bool'
+
   - name: Install new JBoss ImageStreams
     command: oc create -n openshift -f "{{ jboss_image_streams }}"
     register: oc
