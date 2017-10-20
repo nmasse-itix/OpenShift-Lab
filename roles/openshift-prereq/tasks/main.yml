@@ -13,6 +13,7 @@
 
   - name: First, disable any repos (using subscription-manager)
     command: subscription-manager repos --disable="*"
+    when: 'not is_offline|default(False)|bool'
     tags: rpm
 
   - name: Make sure mandatory repos are enabled
@@ -23,6 +24,7 @@
       - rhel-7-server-extras-rpms
       - rhel-7-server-ose-{{ lab_openshift_version }}-rpms
       - rhel-7-fast-datapath-rpms # see https://access.redhat.com/solutions/3008401
+    when: 'not is_offline|default(False)'
     tags: rpm
 
   - name: Install nfs-utils
