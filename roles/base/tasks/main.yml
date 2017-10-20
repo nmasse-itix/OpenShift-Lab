@@ -1,5 +1,10 @@
 ---
 
+  - name: Keep locally downloaded RPMs (used by offline installer)
+    lineinfile: dest=/etc/yum.conf regexp="^#* *keepcache=" line="keepcache=1"
+    when: yum_keepcache
+    tags: config
+
   - name: Tell SSHD not to use DNS
     lineinfile: dest=/etc/ssh/sshd_config regexp="^#* *UseDNS +" line="UseDNS no"
     notify: restart sshd
