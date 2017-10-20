@@ -12,6 +12,22 @@
     set_fact:
       deploy_needed: "{{ 'daemonsets/hostpath-provisioner' not in oc_get_daemonset.stdout_lines }}"
 
+  - name: Create a temporary directory
+    tempfile:
+      state: directory
+    register: tempfile
+    when: 'is_offline|default(False)|bool and deploy_needed'
+
+  - name: Push the Template to the target
+    copy:
+      src: '{{ hostpath_provisioner_template }}'
+      dest: '{{ tempfile.path }}/{{ hostpath_provisioner_template|basename }}'
+    when: 'is_offline|default(False)|bool and deploy_needed'
+
+  - set_fact:
+      hostpath_provisioner_template: '{{ tempfile.path }}/{{ hostpath_provisioner_template|basename }}'
+    when: 'is_offline|default(False)|bool and deploy_needed'
+
   - name: Process the OpenShift Template and create the OpenShift objects for the hostpath-provisioner
     shell: oc process -f "{{ hostpath_provisioner_template }}" -p "HOSTPATH_TO_USE={{ hostpath_provisioner_path }}" -p "TARGET_NAMESPACE={{ hostpath_provisioner_target_namespace }}" -p "HOSTPATH_PROVISIONER_IMAGE={{ hostpath_provisioner_docker_image }}" | oc create -f -
     when: deploy_needed
