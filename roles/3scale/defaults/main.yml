@@ -1,5 +1,7 @@
 ---
 
+  threescale_apicast_git_repo: https://github.com/3scale/apicast.git
+  threescale_webhooks_git_repo: https://github.com/nmasse-itix/3scale-webhooks-sample.git
   threescale_template: https://raw.githubusercontent.com/3scale/3scale-amp-openshift-templates/2.0.0.GA/amp/amp.yml
   threescale_template_format: YAML
   threescale_project: 3scale

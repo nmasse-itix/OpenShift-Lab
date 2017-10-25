@@ -10,7 +10,7 @@
     tags: status
 
   - name: Deploy the Webhooks service
-    command: oc new-app -n '{{ threescale_project }}' https://github.com/nmasse-itix/3scale-webhooks-sample.git --name=webhooks -e SSO_REALM={{ sso_realm }} -e SSO_HOSTNAME={{ sso_route_name }} -e SSO_SERVICE_USERNAME={{ sso_service_username }} -e SSO_SERVICE_PASSWORD={{ sso_service_password }} -e SSO_CLIENT_ID={{ sso_default_client_id }} -e SHARED_SECRET={{ threescale_webhooks_secret }} -e WEBHOOKS_MODULES=log,sso
+    command: oc new-app -n '{{ threescale_project }}' '{{ threescale_webhooks_git_repo }}' --name=webhooks -e SSO_REALM={{ sso_realm }} -e SSO_HOSTNAME={{ sso_route_name }} -e SSO_SERVICE_USERNAME={{ sso_service_username }} -e SSO_SERVICE_PASSWORD={{ sso_service_password }} -e SSO_CLIENT_ID={{ sso_default_client_id }} -e SHARED_SECRET={{ threescale_webhooks_secret }} -e WEBHOOKS_MODULES=log,sso
     when: deploy_needed
 
   - name: Wait for OpenShift to create all objects
