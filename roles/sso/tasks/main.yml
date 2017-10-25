@@ -28,8 +28,19 @@
   - name: Install java-1.8.0-openjdk-headless (required to use 'keytool')
     yum: name=java-1.8.0-openjdk-headless state=installed
 
+  - name: Create a temporary directory
+    tempfile:
+      state: directory
+    register: tempfile
+
+  - name: Check out the jboss-openshift/application-templates GIT repo
+    git:
+      repo: '{{ jboss_openshift_application_templates_git_repo }}'
+      dest: '{{ tempfile.path }}'
+      version: '{{ jboss_openshift_application_templates_tag|default(''master'') }}'
+
   - name: Create the Red Hat SSO templates (globally)
-    command: oc create -n openshift -f https://raw.githubusercontent.com/jboss-openshift/application-templates/{{ jboss_openshift_application_templates_version }}/sso/{{ item }}.json
+    command: oc create -n openshift -f '{{ tempfile.path }}/sso/{{ item }}.json'
     with_items: "{{ sso_available_templates }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
