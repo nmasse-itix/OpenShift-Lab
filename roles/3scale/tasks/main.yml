@@ -41,24 +41,6 @@
         {% endfor -%}
         {{ template }}
 
-  - name: Patch the template to workaround the subPath bug (https://bugzilla.redhat.com/show_bug.cgi?id=1481617)
-    set_fact:
-      template: >-
-        {% for obj in template.objects -%}
-        {% if obj.kind == 'DeploymentConfig' -%}
-          {% for c in obj.spec.template.spec.containers -%}
-            {% if 'volumeMounts' in c -%}
-              {% for m in c.volumeMounts -%}
-                {% if 'subPath' in m -%}
-                  {% if m.update({'subPath': ('..data/' ~ m.subPath) }) -%}{% endif -%}
-                {% endif -%}
-              {% endfor -%}
-            {% endif -%}
-          {% endfor -%}
-        {% endif -%}
-        {% endfor -%}
-        {{ template }}
-
   - name: Create a temporary directory
     tempfile: state=directory
     register: tempfile
