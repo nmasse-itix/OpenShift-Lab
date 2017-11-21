@@ -7,7 +7,7 @@
     - sso71-mysql
     - sso71-postgresql-persistent
     - sso71-postgresql
-  jboss_openshift_application_templates_tag: ose-v1.3.7
+  jboss_openshift_application_templates_tag: ose-v1.4.0
   jboss_openshift_application_templates_git_repo: https://github.com/jboss-openshift/application-templates.git
   sso_template: sso71-postgresql-persistent
   sso_project: sso
