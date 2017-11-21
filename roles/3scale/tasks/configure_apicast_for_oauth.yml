@@ -1,7 +1,0 @@
----
-
-  - name: Update the APICast DeploymentConfig to point to RH-SSO
-    command: oc env dc/{{ item }} -n {{ threescale_project }} RHSSO_ENDPOINT=https://{{ sso_route_name }}/auth/realms/{{ sso_realm }}
-
-  - name: Deploy latest revision of APICast DeploymentConfig
-    command: oc rollout latest dc/{{ item }} -n {{ threescale_project }}

@@ -1,7 +1,7 @@
 ---
 
   threescale_apicast_git_repo: https://github.com/3scale/apicast.git
-  threescale_webhooks_git_repo: https://github.com/nmasse-itix/3scale-webhooks-sample.git
+  threescale_apicast_tag: 3.1-stable
   threescale_template: https://raw.githubusercontent.com/3scale/3scale-amp-openshift-templates/2.0.0.GA/amp/amp.yml
   threescale_template_format: YAML
   threescale_project: 3scale
@@ -9,8 +9,6 @@
   threescale_wildcard_domain: "{{ openshift_master_default_subdomain }}"
   threescale_delay: 5
   threescale_retries: 30
-  threescale_apicast_cors_lua: https://raw.githubusercontent.com/3scale/apicast/master/examples/cors/cors.lua
-  threescale_apicast_cors_conf: https://raw.githubusercontent.com/3scale/apicast/master/examples/cors/cors.conf
   threescale_webhooks_secret: supersecret
   threescale_expected_deployment_configs:
     - apicast-staging
@@ -26,6 +24,9 @@
     - system-sidekiq
     - backend-cron
     - system-sphinx
+    - zync
+    - zync-database
+    - apicast-wildcard-router
   threescale_apis_to_create:
     - service:
         name: "Hello API"

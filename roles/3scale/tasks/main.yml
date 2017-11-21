@@ -20,16 +20,17 @@
   - name: Fetch the latest 3scale AMP template from the 3scale repo
     uri: url={{threescale_template}} return_content=yes
     register: template
+    when: deploy_needed
 
   - name: Parse the YAML file
     set_fact:
       template: '{{template.content |from_yaml }}'
-    when: "threescale_template_format|upper == 'YAML'"
+    when: "deploy_needed and threescale_template_format|upper == 'YAML'"
 
   - name: Parse the JSON file
     set_fact:
       template: '{{template.content |from_json }}'
-    when: "threescale_template_format|upper == 'JSON'"
+    when: "deploy_needed and threescale_template_format|upper == 'JSON'"
 
   - name: Disable the triggers and set the replicas to 0
     set_fact:
@@ -40,13 +41,16 @@
         {% endif -%}
         {% endfor -%}
         {{ template }}
+    when: deploy_needed
 
   - name: Create a temporary directory
     tempfile: state=directory
     register: tempfile
+    when: deploy_needed
 
   - name: Write the template
     template: src=amp.json dest={{tempfile.path}}/amp.json
+    when: deploy_needed
 
   - name: Process the OpenShift Template and create the OpenShift objects for the 3scale API Management Platform
     shell: oc process -f "{{tempfile.path}}/amp.json" -p "TENANT_NAME={{ threescale_tenant_name }}" -p "WILDCARD_DOMAIN={{ threescale_wildcard_domain }}" -n "{{ threescale_project }}" | oc create -f - -n "{{ threescale_project }}"
@@ -69,23 +73,25 @@
       project: "{{ threescale_project }}"
     tags: status
 
-  - name: Deploy the storage tier (MySQL, Redis and Memcache) without any replicas
+  - name: Deploy the storage tier (MySQL, Redis, PostgreSQL and Memcache) without any replicas
     command: oc rollout latest "{{ item }}" -n "{{ threescale_project }}"
     with_items:
       - backend-redis
       - system-memcache
       - system-mysql
       - system-redis
+      - zync-database
     when: item not in deployment_configs
     tags: rollout
 
-  - name: Scale the storage tier (MySQL, Redis and Memcache)
+  - name: Scale the storage tier (MySQL, Redis, PostgreSQL and Memcache)
     command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
       - backend-redis
       - system-memcache
       - system-mysql
       - system-redis
+      - zync-database
     when: item not in replication_controllers
     tags: rollout
 
@@ -97,6 +103,7 @@
         - system-memcache
         - system-mysql
         - system-redis
+        - zync-database
       delay: "{{ threescale_delay }}"
       retries: "{{ threescale_retries }}"
       project: "{{ threescale_project }}"
@@ -137,6 +144,8 @@
       - system-sphinx
       - apicast-staging
       - apicast-production
+      - apicast-wildcard-router
+      - zync
     when: item not in deployment_configs
     tags: rollout
 
@@ -182,15 +191,11 @@
       project: "{{ threescale_project }}"
     tags: status
 
-  - include: configure_apicast_for_oauth.yml
-    with_items:
-      - apicast-staging
-      - apicast-production
-    tags: oauth
-
-  - name: Deploy apicast-staging, apicast-production
+  - name: Deploy zync, apicast-staging, apicast-production
     command: oc scale dc "{{ item }}" --replicas=1 -n "{{ threescale_project }}"
     with_items:
+      - zync
+      - apicast-wildcard-router
       - apicast-staging
       - apicast-production
     when: item not in replication_controllers
@@ -240,9 +245,7 @@
 
   - include: oauth-client.yml
     tags: oauth-client
-
-  - include: webhooks.yml
-    tags: webhooks
+    when: 'not is_offline|default(False)|bool'
 
   - name: Get Admin Username
     command: oc get dc system-app -n "{{ threescale_project }}" -o 'jsonpath={.spec.template.spec.containers[0].env[?(@.name=="USER_LOGIN")].value}'

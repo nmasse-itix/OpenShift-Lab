@@ -3,20 +3,25 @@
     tempfile: state=directory
     register: tempfile
 
-  - name: Download 'cors.lua'
-    get_url: dest='{{ tempfile.path }}/cors.lua' url={{ threescale_apicast_cors_lua }}
+  - name: Use a local copy of the 3scale/apicast GIT repo
+    set_fact:
+      threescale_apicast_git_repo: 'http://{{ offline_git_route }}/{{ threescale_apicast_git_repo|basename|regex_replace(''[.]git$'', '''') }}'
+    when: 'is_offline|default(false)|bool'
 
-  - name: Download 'cors.conf'
-    get_url: dest='{{ tempfile.path }}/cors.conf' url={{ threescale_apicast_cors_conf }}
+  - name: Check out the 3scale/apicast GIT repo
+    git:
+      repo: '{{ threescale_apicast_git_repo }}'
+      dest: '{{ tempfile.path }}'
+      version: '{{ threescale_apicast_tag|default(''master'') }}'
 
   - name: Create ConfigMap 'apicast-custom-module'
-    command: chdir={{ tempfile.path }} oc create configmap apicast-custom-module --from-file=cors.lua -n "{{ threescale_project }}"
+    command: chdir={{ tempfile.path }} oc create configmap apicast-custom-module --from-file=examples/cors/cors.lua -n "{{ threescale_project }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
 
   - name: Create ConfigMap 'cors-conf'
-    command: chdir={{ tempfile.path }} oc create configmap apicast.d --from-file=cors.conf -n "{{ threescale_project }}"
+    command: chdir={{ tempfile.path }} oc create configmap apicast.d --from-file=examples/cors/cors.conf -n "{{ threescale_project }}"
     register: oc
     failed_when: oc.rc > 0 and 'Error from server (AlreadyExists):' not in oc.stderr
     changed_when: oc.rc == 0
